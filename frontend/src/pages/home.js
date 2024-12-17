@@ -2,30 +2,24 @@ import React, { useEffect, useState } from 'react'; // Import React hooks
 import { Card, Row, Col, Container, Spinner, Alert } from 'react-bootstrap'; // Import Bootstrap components
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'; // Import Recharts components
 import axios from 'axios'; // Import axios for HTTP requests
-import {  Book, Assignment, Money } from '@mui/icons-material'; // Import Material UI icons
+import { Book, Assignment } from '@mui/icons-material'; // Import Material UI icons
 
 const HomePage = () => {
-  const [facultyName, setFacultyName] = useState('');
-  const [facultyId, setFacultyId] = useState('');
   const [stats, setStats] = useState({
     total_faculty: 0,
     total_logins: 0,
     total_publications: 0,
     total_patents: 0,
-    total_seedmoney: 0
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  const facultyName = sessionStorage.getItem('faculty_name');
+  const facultyId = sessionStorage.getItem('faculty_id');
+  
   useEffect(() => {
-    const name = localStorage.getItem('faculty_name');
-    const id = localStorage.getItem('faculty_id');
-    setFacultyName(name);
-    setFacultyId(id);
-
     // Fetch overall statistics
     axios
-      .get('http://localhost:5003/api/stats')
+      .get(`http://localhost:5009/api/stats/${facultyId}`)
       .then((response) => {
         setStats(response.data);
         setLoading(false);
@@ -35,13 +29,12 @@ const HomePage = () => {
         setError('Failed to load overall statistics. Please try again later.');
         setLoading(false);
       });
-  }, []);
+  }, [facultyId]);
 
   const pieData = [
     { name: 'Faculties', value: stats.total_faculty },
     { name: 'Publications', value: stats.total_publications },
     { name: 'Patents', value: stats.total_patents },
-    { name: 'Seed Money', value: stats.total_seedmoney }
   ];
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
@@ -65,8 +58,9 @@ const HomePage = () => {
 
   return (
     <Container fluid>
-      <Row className="d-flex">
-        <Col xs={12} md={12} className="main-content" style={{ paddingTop: '20px' }}>
+
+        {/* Main Content Area */}
+        <Col xs={12} md={9} className="main-content" style={{ paddingTop: '20px' }}>
           <h2>Welcome, {facultyName}!</h2>
           <p>This is your dashboard with key statistics visualized.</p>
 
@@ -101,10 +95,6 @@ const HomePage = () => {
                 </Card.Body>
               </Card>
             </Col>
-          </Row>
-
-          {/* Total Publications, Patents, and Seed Money */}
-          <Row>
             <Col md={4}>
               <Card className="mb-4">
                 <Card.Body>
@@ -114,8 +104,6 @@ const HomePage = () => {
                   <Card.Text>{stats.total_publications}</Card.Text>
                 </Card.Body>
               </Card>
-            </Col>
-            <Col md={4}>
               <Card className="mb-4">
                 <Card.Body>
                   <Card.Title>
@@ -125,19 +113,8 @@ const HomePage = () => {
                 </Card.Body>
               </Card>
             </Col>
-            <Col md={4}>
-              <Card className="mb-4">
-                <Card.Body>
-                  <Card.Title>
-                    <Money /> Total Seed Money
-                  </Card.Title>
-                  <Card.Text>{stats.total_seedmoney}</Card.Text>
-                </Card.Body>
-              </Card>
-            </Col>
           </Row>
         </Col>
-      </Row>
     </Container>
   );
 };

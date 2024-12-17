@@ -31,30 +31,35 @@ connection.connect((err) => {
 
 // API endpoint to fetch overall statistics
 // API endpoint to fetch overall statistics
-app.get('/api/stats', async (req, res) => {
+app.get('/api/stats/:facultyId', async (req, res) => {
+  const { facultyId } = req.params;
+
+  // Queries to fetch statistics based on facultyId
   const queries = {
-    total_faculty: 'SELECT COUNT(*) AS count FROM faculty',
-    total_publications: 'SELECT COUNT(*) AS count FROM publications',
-    total_patents: 'SELECT COUNT(*) AS count FROM patents',
-    total_seedmoney: 'SELECT COUNT(*) AS count FROM seedmoney'
+    total_faculty: 'SELECT COUNT(*) AS count FROM faculty WHERE faculty_id = ?',
+    total_publications: 'SELECT COUNT(*) AS count FROM publications WHERE faculty_id = ?',
+    total_patents: 'SELECT COUNT(*) AS count FROM patents WHERE faculty_id = ?',
   };
 
   try {
-    const executeQuery = (query) =>
+    // Execute each query and pass the facultyId as a parameter
+    const executeQuery = (query, facultyId) =>
       new Promise((resolve, reject) => {
-        connection.query(query, (err, results) => {
+        connection.query(query, [facultyId], (err, results) => {
           if (err) return reject(err);
           resolve(results[0].count);
         });
       });
 
-    const stats = await Promise.all(Object.entries(queries).map(([key, query]) => executeQuery(query)));
+    // Fetch statistics based on facultyId
+    const stats = await Promise.all(
+      Object.entries(queries).map(([key, query]) => executeQuery(query, facultyId))
+    );
 
     const response = {
       total_faculty: stats[0],
       total_publications: stats[1],
       total_patents: stats[2],
-      total_seedmoney: stats[3]
     };
 
     res.json(response);
@@ -65,6 +70,6 @@ app.get('/api/stats', async (req, res) => {
 });
 
 // Start the server
-app.listen(5003, () => {
+app.listen(5009, () => {
   console.log('Server running on http://localhost:5003');
 });

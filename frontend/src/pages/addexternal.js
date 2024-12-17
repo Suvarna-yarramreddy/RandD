@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { useFaculty } from "./facultyContext";
+
 import { useNavigate } from "react-router-dom";
 const ExternalFunded = () => {
-  const {faculty_id} = useFaculty();
+  const faculty_id = sessionStorage.getItem("faculty_id");
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     financialYear: "",

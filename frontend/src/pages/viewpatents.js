@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useFaculty } from "./facultyContext";
+
 
 const PatentsPage = () => {
     const [patents, setPatents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const { faculty_id } = useFaculty();
+    const faculty_id = sessionStorage.getItem("faculty_id");
 
     useEffect(() => {
         const fetchPatents = async () => {

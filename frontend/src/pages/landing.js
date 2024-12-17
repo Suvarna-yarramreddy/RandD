@@ -49,13 +49,7 @@ const LandingPage = () => {
         </div>
       </div>
 
-      {/* Footer Section */}
-      <footer className="bg-dark text-white text-center py-3">
-        <p className="mb-0">
-          &copy; 2024 Shri Vishnu Engineering College for Women | All Rights
-          Reserved
-        </p>
-      </footer>
+      
     </div>
   );
 };

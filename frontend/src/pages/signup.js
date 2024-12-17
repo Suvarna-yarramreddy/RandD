@@ -2,10 +2,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import axios from 'axios';
 import { useNavigate } from "react-router-dom";
-import { useFaculty } from "./facultyContext";
 
 const FacultySignupPage = () => {
-  const {  setFacultyId } = useFaculty();
   const [formData, setFormData] = useState({
     institute_name: "",
     faculty_id: "",
@@ -222,55 +220,71 @@ const FacultySignupPage = () => {
     return error;
   };
   
-
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     // Validate all fields before submission
     let formIsValid = true;
     const newErrors = {};
-  
+
+    // Validate all form fields
     Object.keys(formData).forEach((fieldName) => {
-      const error = validateField(fieldName, formData[fieldName]);
-      if (error) formIsValid = false;
-      newErrors[fieldName] = error;
+        const error = validateField(fieldName, formData[fieldName]);
+        if (error) {
+            formIsValid = false;
+            newErrors[fieldName] = error;
+        } else {
+            newErrors[fieldName] = ''; // Reset error if field is valid
+        }
     });
-  
+
     setErrors(newErrors);
-  
+
     // Stop execution if the form is not valid
     if (!formIsValid) {
-      console.log("Form contains errors. Please fix them.");
-      return;
+        alert("Form contains errors. Please fix them.");
+        return;
     }
-  
+
     console.log("Form submitted successfully:", formData);
-  
+
     try {
-      const response = await axios.post("http://localhost:5000/signup", formData);
-  
-      if (response.status === 201) {
-        const { faculty_name, faculty_id } = response.data;
-  
-        // Save data to localStorage
-        localStorage.setItem("faculty_name", faculty_name);
-        localStorage.setItem("faculty_id", faculty_id);
-        setFacultyId(faculty_id);
-  
-        // Navigate to the home page
-        navigate("/home");
-      }
+        const response = await axios.post("http://localhost:5000/signup", formData);
+
+        if (response.status === 201) {
+            const { faculty_name, faculty_id } = response.data;
+
+            // Save login state and faculty details to sessionStorage
+            sessionStorage.setItem("isLoggedIn", "true");
+            sessionStorage.setItem("faculty_name", faculty_name);
+            sessionStorage.setItem("faculty_id", faculty_id);
+
+            // Navigate to the home page after successful signup
+            navigate("/home");
+        }
     } catch (error) {
-      if (error.response) {
-        // Set error message for form submission
-        setErrors((prevErrors) => ({
-          ...prevErrors,
-          form: error.response.data.message || "An error occurred.",
-        }));
-      }
+        if (error.response) {
+            // Handling 400 error or other server errors gracefully
+            if (error.response.status === 400) {
+                alert("FacultyId or Official Mail Id already exists.");
+            } else if (error.response.status === 500) {
+                alert("An internal server error occurred. Please try again later.");
+            } else {
+                alert(error.response.data.message || "An error occurred.");
+            }
+
+            // Set error message for form submission
+            setErrors((prevErrors) => ({
+                ...prevErrors,
+                form: error.response.data.message || "An error occurred.",
+            }));
+        } else {
+            alert("Network error. Please check your connection.");
+        }
     }
-  };
+};
+
+  
   
   return (
     <div className="container mt-5">
@@ -319,18 +333,29 @@ const FacultySignupPage = () => {
 
       {/* Row 2 */}
       <div className="row mt-3">
-        <div className="col-md-4">
-          <label htmlFor="department" className="form-label">Department</label>
-          <input
-            type="text"
-            id="department"
-            name="department"
-            value={formData.department}
-            onChange={handleChange}
-            className="form-control"
-          />
-          {errors.department && <div className="text-danger">{errors.department}</div>}
-        </div>
+      <div className="col-md-4">
+              <label htmlFor="department" className="form-label">Department</label>
+              <select
+                id="department"
+                name="department"
+                value={formData.department}
+                onChange={handleChange}
+                className="form-control"
+              >
+                <option value="">Select Department</option>
+                <option value="cse">CSE</option>
+                <option value="aiml">AIML</option>
+                <option value="aids">AIDS</option>
+                <option value="it">IT</option>
+                <option value="cs">CS</option>
+                <option value="eee">EEE</option>
+                <option value="ece">ECE</option>
+                <option value="civil">Civil</option>
+                <option value="me">ME</option>
+              </select>
+              {errors.department && <div className="text-danger">{errors.department}</div>}
+            </div>
+
         <div className="col-md-4">
           <label htmlFor="designation" className="form-label">Designation</label>
           <select

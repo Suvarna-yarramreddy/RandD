@@ -12,6 +12,10 @@ import PublicationPage from './pages/addpublication';
 import  SeedMoneyPage from './pages/addseedmoney';
 import PublicationsPage from './pages/viewpublications';
 import PatentForm from './pages/viewpatents';
+import LoginCorPage from './pages/depcorlogin';
+import CorWelcome from './pages/corwelcome';
+import Corsidebar from './pages/corsidebar';
+import CorViewPublications from './pages/depcorpubview';
 const App = () => {
   return (
     <Router>
@@ -27,6 +31,10 @@ const App = () => {
           <Route path="/addseedmoney" element={<SeedMoneyPage/>}/>
           <Route path="/viewpublications" element={<PublicationsPage/>}/>
           <Route path="/viewpatents" element={<PatentForm/>}/>
+          <Route path="/coordinatorlogin" element={<LoginCorPage/>}/>
+          <Route path="/coordinatorwelcome" element={<CorWelcome/>}/>
+          <Route path="/coordinatorsidebar" element={<Corsidebar/>}/>
+          <Route path="/corviewpublications" element={<CorViewPublications/>}/>
         </Routes>
       </Layout>
     </Router>

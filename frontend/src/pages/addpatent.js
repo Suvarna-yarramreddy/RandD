@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { useFaculty } from "./facultyContext";
+
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 const PatentForm = () => {
-  const {faculty_id} = useFaculty();
+  const faculty_id = sessionStorage.getItem("faculty_id");
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     category: "",
