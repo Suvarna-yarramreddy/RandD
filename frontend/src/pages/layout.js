@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import Navbar from "./navbar";
 import Sidebar from "./sidebar";
-import CoordinatorSidebar from "./corsidebar"; // Import Coordinator Sidebar
+import CoordinatorSidebar from "./depcorsidebar"; // Import Coordinator Sidebar
 
 const Layout = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);

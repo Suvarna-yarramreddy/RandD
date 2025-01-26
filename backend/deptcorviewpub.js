@@ -67,17 +67,23 @@ app.get('/getAllPublications', (req, res) => {
                 return res.status(404).send('No publications applied for approval.');
             }
 
-            res.json(publicationsResults); // Send the publications as a JSON response
+            // Modify the proofOfPublication path if it exists
+            publicationsResults.forEach(pub => {
+                if (pub.proofOfPublication) {
+                    pub.proofOfPublication = `${pub.proofOfPublication.replace(/\\/g, '/')}`;
+                }
+            });
+
+            // Send the publications as a JSON response
+            res.json(publicationsResults);
         });
     });
 });
 
+
 // Route to approve a publication
 app.put('/approvePublication/:id', (req, res) => {
     const publicationId = req.params.id;
-
-    // Log the publicationId to verify it's coming through
-    console.log('Approving publication with ID:', publicationId);
 
     const query = 'UPDATE publications SET status = ? WHERE publication_id = ?';
 

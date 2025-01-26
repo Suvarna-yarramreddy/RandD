@@ -13,9 +13,12 @@ import  SeedMoneyPage from './pages/addseedmoney';
 import PublicationsPage from './pages/viewpublications';
 import PatentForm from './pages/viewpatents';
 import LoginCorPage from './pages/depcorlogin';
-import CorWelcome from './pages/corwelcome';
-import Corsidebar from './pages/corsidebar';
-import CorViewPublications from './pages/depcorpubview';
+import CorWelcome from './pages/depcorwelcome';
+import Corsidebar from './pages/depcorsidebar';
+import CorViewPublications from './pages/deptcorviewpub';
+import CorViewPatents from './pages/deptcorviewpatents';
+import Editpub from './pages/editpublications';
+import Editpat from './pages/editpatents';
 const App = () => {
   return (
     <Router>
@@ -35,6 +38,9 @@ const App = () => {
           <Route path="/coordinatorwelcome" element={<CorWelcome/>}/>
           <Route path="/coordinatorsidebar" element={<Corsidebar/>}/>
           <Route path="/corviewpublications" element={<CorViewPublications/>}/>
+          <Route path="/corviewpatents" element={<CorViewPatents/>}/>
+          <Route path="/editpublications" element={<Editpub/>}/>
+          <Route path="/editpatents" element={<Editpat/>}/>
         </Routes>
       </Layout>
     </Router>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; // Updated import
 
 const PublicationsPage = () => {
     const [publications, setPublications] = useState([]);
@@ -6,19 +7,18 @@ const PublicationsPage = () => {
 
     // State to track which publication's details should be visible
     const [visibleDetails, setVisibleDetails] = useState(null);
+    const navigate = useNavigate(); // Updated hook for navigation
 
     useEffect(() => {
         const fetchPublications = async () => {
             try {
                 const response = await fetch(`http://localhost:5002/getPublications/${faculty_id}`);
                 if (!response.ok) {
-                    // Log the error response to inspect it
                     const errorText = await response.text();
                     console.error('Error response:', errorText);
                     throw new Error('Failed to fetch publications');
                 }
 
-                // Log the response data for inspection
                 const data = await response.json();
                 setPublications(data);
             } catch (error) {
@@ -33,13 +33,19 @@ const PublicationsPage = () => {
     const handleToggleDetails = (publicationId) => {
         setVisibleDetails(visibleDetails === publicationId ? null : publicationId);
     };
+
+    // Navigate to the Edit Publication page and pass the publication data
+    const handleEditClick = (pub) => {
+        navigate('/editpublications', { state: { publication: pub } }); // Updated navigation
+    };
+
     return (
         <div className="container my-4">
             <h1 className="text-center text-dark mb-4"> Your Publications</h1>
             {publications.length > 0 ? (
                 <div className="row">
                     {publications.map(pub => (
-                        <div className="col-md-6 mb-4" key={pub.publication_id}> {/* Ensure each item has a unique key */}
+                        <div className="col-md-6 mb-4" key={pub.publication_id}>
                             <div className="card">
                                 <div className="card-body d-flex flex-column">
                                     <div className="d-flex justify-content-between align-items-center mb-3">
@@ -55,14 +61,23 @@ const PublicationsPage = () => {
                                         </h5>
                                         <div className="text-right">
                                             <strong>Status:</strong>
-                                            <span className="text-dark ms-2">
-                                                {pub.status}
-                                            </span>
-                                            {/* Conditionally display rejection reason if the status is "rejected" */}
+                                            <span className="text-dark ms-2">{pub.status}</span>
+
+                                            {/* Conditionally display rejection reason */}
                                             {pub.status === 'Rejected by Department R&D Coordinator' && pub.rejection_reason && (
                                                 <div className="mt-2">
                                                     <strong>Reason:</strong> {pub.rejection_reason}
                                                 </div>
+                                            )}
+                                            
+                                            {/* Show "Edit" button only for rejected publications */}
+                                            {pub.status === 'Rejected by Department R&D Coordinator' && (
+                                                <button
+                                                    className="btn btn-warning mt-2"
+                                                    onClick={() => handleEditClick(pub)} // Handle edit button click
+                                                >
+                                                    Edit
+                                                </button>
                                             )}
                                         </div>
                                     </div>
@@ -89,34 +104,19 @@ const PublicationsPage = () => {
                                                     {pub.impactFactor && <p><strong>Impact Factor:</strong> {pub.impactFactor}</p>}
                                                     {pub.doi && <p><strong>DOI:</strong> {pub.doi}</p>}
                                                     {pub.linkOfPaper && (
-                                                        <p>
-                                                            <strong>Link to Paper:</strong>{" "}
-                                                            <a href={pub.linkOfPaper} target="_blank" rel="noopener noreferrer">
-                                                            {pub.linkOfPaper}
-                                                            </a>
-                                                        </p>
-                                                        )}
-
-                                                        {pub.scopusLink && (
-                                                        <p>
-                                                            <strong>Scopus Link:</strong>{" "}
-                                                            <a href={pub.scopusLink} target="_blank" rel="noopener noreferrer">
-                                                            {pub.scopusLink}
-                                                            </a>
-                                                        </p>
-                                                        )}
-
+                                                        <p><strong>Link to Paper:</strong> <a href={pub.linkOfPaper} target="_blank" rel="noopener noreferrer">{pub.linkOfPaper}</a></p>
+                                                    )}
+                                                    {pub.scopusLink && (
+                                                        <p><strong>Scopus Link:</strong> <a href={pub.scopusLink} target="_blank" rel="noopener noreferrer">{pub.scopusLink}</a></p>
+                                                    )}
                                                     {pub.volume && <p><strong>Volume:</strong> {pub.volume}</p>}
                                                     {pub.pageNo && <p><strong>Page Number:</strong> {pub.pageNo}</p>}
-                                                    {pub.monthYear && <p><strong>Month & Year:</strong> {pub.monthYear}</p>}
+                                                    {pub.monthYear && <p><strong>Year & Month:</strong> {pub.monthYear}</p>}
                                                     {pub.citeAs && <p><strong>Cite As:</strong> {pub.citeAs}</p>}
                                                     {pub.proofOfPublication && (
-                                                        <p><strong>Proof of Publication:</strong> 
-                                                        <a href={`http://localhost:5002${pub.proofOfPublication}`} target="_blank" rel="noopener noreferrer">
-                                                            View Proof
-                                                        </a>
-                                                    </p>
-                                                    
+                                                        <p><strong>Proof of Publication:</strong>
+                                                            <a href={`http://localhost:5002/${pub.proofOfPublication}`} target="_blank" rel="noopener noreferrer">View Proof</a>
+                                                        </p>
                                                     )}
                                                 </div>
                                             </div>

@@ -498,7 +498,7 @@ const AddPublicationPage = () => {
             {/* Row 10 - Month & Year and Cite As */}
             <div className="row">
               <div className="col-md-6 mb-3">
-                <label className="form-label">Month & Year</label>
+                <label className="form-label">Year & Month</label>
                 <input
                   type="month"
                   name="monthYear"

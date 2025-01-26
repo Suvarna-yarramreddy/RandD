@@ -121,7 +121,7 @@ app.get('/getPatents/:faculty_id', (req, res) => {
         // Update proofOfPatent to include the public URL for file access
         results.forEach(patent => {
             if (patent.proofOfPatent) {
-                patent.proofOfPatent = `http://localhost:5001/${patent.proofOfPatent.replace(/\\/g, '/')}`;
+                patent.proofOfPatent = `${patent.proofOfPatent.replace(/\\/g, '/')}`;
             }
         });
 
@@ -129,7 +129,99 @@ app.get('/getPatents/:faculty_id', (req, res) => {
         res.json(results);
     });
 });
+app.put('/update-patent/:id', upload.single('proofOfPatent'), (req, res) => {
+    const patentId = req.params.id; // Extract the ID from the route parameter
 
+    // Fetch the existing publication details
+    const fetchQuery = "SELECT * FROM patents WHERE patent_id = ?";
+    db.query(fetchQuery, [patentId], (err, results) => {
+        if (err) {
+            console.error("Error fetching patent:", err);
+            return res.status(500).json({ message: "Error fetching patent", error: err });
+        }
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: "Patent not found" });
+        }
+
+        const existingData = results[0]; // Existing details of the publication
+
+        // Extract new data from request body, or use the existing values if not provided
+        const {
+            faculty_id = existingData.faculty_id,
+            category = existingData.category,
+            iprType= existingData.iprType,
+            applicationNumber = existingData.applicationNumber,
+            applicantName = existingData.applicantName,
+            department = existingData.department,
+            filingDate= existingData.filingDate,
+            inventionTitle= existingData.inventionTitle,
+            numOfInventors = existingData.numOfInventors,
+            inventors = existingData.inventors,
+            status = existingData.status,
+            dateOfPublished = existingData.dateOfPublished,
+            dateOfGranted = existingData.dateOfGranted
+        } = req.body;
+
+        // Handle file upload or retain the existing proofOfPublication
+        let  proofOfPatent = existingData.proofOfPatent;  // Default to the existing value
+
+        if (req.file) {
+            // If a new file is uploaded, store the new path
+            proofOfPatent = `uploads\patents\${req.file.filename}`; // Updated file path
+        }
+
+        // Update query
+        const updateQuery = `
+            UPDATE patents
+            SET 
+                faculty_id = ?,
+                category = ?,
+                iprType = ?,
+                applicationNumber = ?,
+                applicantName = ?,
+                department= ?,
+                filingDate= ?,
+                inventionTitle= ?,
+                numOfInventors= ?,
+                inventors= ?,
+                status= ?,
+                dateOfPublished= ?,
+                dateOfGranted= ?,
+                proofOfPatent= ?,
+            WHERE patent_id = ?`;
+
+        const values = [
+            faculty_id, category,
+            iprType ,
+            applicationNumber,
+            applicantName,
+            department,
+            filingDate,
+            inventionTitle,
+            numOfInventors,
+            inventors,
+            status,
+            dateOfPublished,
+            dateOfGranted,
+            proofOfPatent
+        ];
+
+        // Execute the update query
+        db.query(updateQuery, values, (updateErr, result) => {
+            if (updateErr) {
+                console.error("Error updating patent:", updateErr);
+                return res.status(500).json({ message: "Failed to update patent", error: updateErr });
+            }
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ message: "Patent not found" });
+            }
+
+            res.json({ message: "Patent updated successfully" });
+        });
+    });
+});
 
 
 // Start the server
