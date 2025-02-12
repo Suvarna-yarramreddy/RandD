@@ -184,7 +184,7 @@ const AddPublicationPage = () => {
       // Log form data for debugging
       console.log("Sending form data:", formDataToSend);
   
-      const response = await axios.post("http://localhost:5002/addPublication", formDataToSend, {
+      const response = await axios.post("http://localhost:5000/addPublication", formDataToSend, {
         headers: {
           "Content-Type": "multipart/form-data", // Ensure the correct header for file upload
         },

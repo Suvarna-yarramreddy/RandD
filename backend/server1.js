@@ -3,7 +3,10 @@ const mysql = require("mysql2");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const bcrypt = require('bcrypt');
+const multer = require("multer");
+const path = require('path');
 
+const fs = require('fs');
 const app = express();
 
 // Middleware
@@ -215,6 +218,861 @@ app.post("/login", (req, res) => {
                 }
             }
         });
+    });
+});
+
+app.get('/api/stats/:facultyId', async (req, res) => {
+    const { facultyId } = req.params;
+  
+    // Queries to fetch statistics based on facultyId
+    const queries = {
+      total_faculty: 'SELECT COUNT(*) AS count FROM faculty WHERE faculty_id = ?',
+      total_publications: 'SELECT COUNT(*) AS count FROM publications WHERE faculty_id = ?',
+      total_patents: 'SELECT COUNT(*) AS count FROM patents WHERE faculty_id = ?',
+    };
+  
+    try {
+      // Execute each query and pass the facultyId as a parameter
+      const executeQuery = (query, facultyId) =>
+        new Promise((resolve, reject) => {
+          db.query(query, [facultyId], (err, results) => {
+            if (err) return reject(err);
+            resolve(results[0].count);
+          });
+        });
+  
+      // Fetch statistics based on facultyId
+      const stats = await Promise.all(
+        Object.entries(queries).map(([key, query]) => executeQuery(query, facultyId))
+      );
+  
+      const response = {
+        total_faculty: stats[0],
+        total_publications: stats[1],
+        total_patents: stats[2],
+      };
+  
+      res.json(response);
+    } catch (error) {
+      console.error('Error fetching statistics:', error);
+      res.status(500).json({ message: 'Internal Server Error' });
+    }
+  });
+
+  
+  const storage = multer.diskStorage({
+      destination: (req, file, cb) => {
+          let dir;
+  
+          // Dynamically set upload directory based on the request URL
+          if (req.url.includes('addPatent')) {
+              dir = './uploads/patents/';
+          } else if (req.url.includes('addPublication')) {
+              dir = './uploads/publications/';
+          } else if (req.url.includes('addSeedMoney')) {
+              dir = './uploads/seedmoney/';
+          } else {
+              dir = './uploads/others/'; // Default directory
+          }
+  
+          // Ensure the directory exists, if not, create it
+          if (!fs.existsSync(dir)) {
+              fs.mkdirSync(dir, { recursive: true });
+          }
+  
+          cb(null, dir);
+      },
+      filename: (req, file, cb) => {
+          cb(null, Date.now() + path.extname(file.originalname)); // Rename file to avoid name collisions
+      }
+  });
+  
+  // Initialize multer with the storage configuration
+  const upload = multer({ storage });
+  
+  // Serve uploaded files statically
+  app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+  
+
+  app.post("/addPublication", upload.single("proofOfPublication"), (req, res) => {
+    const {
+        faculty_id,
+        natureOfPublication,
+        typeOfPublication,
+        titleOfPaper,
+        nameOfJournalConference,
+        titleofChapter,
+        nameofbook,
+        nameOfPublisher,
+        issnIsbn,
+        authorStatus,
+        firstAuthorName,
+        firstAuthorAffiliation,
+        coAuthors,
+        indexed,
+        quartile,
+        impactFactor,
+        doi,
+        linkOfPaper,
+        scopusLink,
+        volume,
+        pageNo,
+        monthYear,
+        citeAs
+    } = req.body;
+
+    // File uploaded will be saved as filename
+    const proofOfPublication = req.file ? req.file.path : null; // URL of the uploaded file
+
+    // Include status with default value 'Applied'
+    const status = "Applied";
+
+    const query = `
+        INSERT INTO publications (
+        faculty_id, natureOfPublication, typeOfPublication, titleOfPaper, nameOfJournalConference, titleofChapter, nameofbook, 
+        nameOfPublisher, issnIsbn, authorStatus, firstAuthorName, firstAuthorAffiliation, coAuthors, indexed, quartile, impactFactor, 
+        doi, linkOfPaper, scopusLink, volume, pageNo, monthYear, citeAs, status, proofOfPublication
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+    db.query(query, [
+        faculty_id, natureOfPublication, typeOfPublication, titleOfPaper, nameOfJournalConference, titleofChapter, nameofbook,
+        nameOfPublisher, issnIsbn, authorStatus, firstAuthorName, firstAuthorAffiliation, coAuthors, indexed, quartile, impactFactor,
+        doi, linkOfPaper, scopusLink, volume, pageNo, monthYear, citeAs, status, proofOfPublication
+    ], (err, result) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).send("Error while inserting publication");
+        }
+        res.status(200).send("Publication added successfully");
+    });
+});
+
+// Get Publications Endpoint
+app.get("/getPublications/:faculty_id", (req, res) => {
+    const faculty_id = req.params.faculty_id;
+
+    const query = "SELECT * FROM publications WHERE faculty_id = ?";
+    app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve uploaded files
+
+    db.query(query, [faculty_id], (err, results) => {
+        if (err) {
+            console.error("Error fetching publications:", err);
+            return res.status(500).json({ error: "Internal server error", details: err });
+        }
+
+        if (results.length === 0) {
+            console.log("No publications found for this faculty ID.");
+            return res.status(404).json({ message: "No publications found" });
+        }
+
+        // Correct file path format for client-side access
+        results.forEach(pub => {
+            if (pub.proofOfPublication) {
+                pub.proofOfPublication = `${pub.proofOfPublication.replace(/\\/g, '/')}`;
+            }
+        });
+        res.json(results);
+    });
+});
+
+// Update Publication Endpoint
+app.put('/update-publication/:id', upload.single('proofOfPublication'), (req, res) => {
+    const publicationId = req.params.id; // Extract the ID from the route parameter
+
+    // Fetch the existing publication details
+    const fetchQuery = "SELECT * FROM publications WHERE publication_id = ?";
+    db.query(fetchQuery, [publicationId], (err, results) => {
+        if (err) {
+            console.error("Error fetching publication:", err);
+            return res.status(500).json({ message: "Error fetching publication", error: err });
+        }
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: "Publication not found" });
+        }
+
+        const existingData = results[0]; // Existing details of the publication
+
+        // Extract new data from request body, or use the existing values if not provided
+        const {
+            faculty_id = existingData.faculty_id,
+            natureOfPublication = existingData.natureOfPublication,
+            typeOfPublication = existingData.typeOfPublication,
+            titleOfPaper = existingData.titleOfPaper,
+            nameOfJournalConference = existingData.nameOfJournalConference,
+            titleofChapter = existingData.titleofChapter,
+            nameofbook = existingData.nameofbook,
+            nameOfPublisher = existingData.nameOfPublisher,
+            issnIsbn = existingData.issnIsbn,
+            authorStatus = existingData.authorStatus,
+            firstAuthorName = existingData.firstAuthorName,
+            firstAuthorAffiliation = existingData.firstAuthorAffiliation,
+            coAuthors = existingData.coAuthors,
+            indexed = existingData.indexed,
+            quartile = existingData.quartile,
+            impactFactor = existingData.impactFactor,
+            doi = existingData.doi,
+            linkOfPaper = existingData.linkOfPaper,
+            scopusLink = existingData.scopusLink,
+            volume = existingData.volume,
+            pageNo = existingData.pageNo,
+            monthYear = existingData.monthYear,
+            citeAs = existingData.citeAs
+        } = req.body;
+
+        // Handle file upload or retain the existing proofOfPublication
+        let proofOfPublication = existingData.proofOfPublication;  // Default to the existing value
+
+        if (req.file) {
+            // If a new file is uploaded, store the new path
+            proofOfPublication = `uploads/publications/${req.file.filename}`; // Updated file path
+        }
+
+        // Update query
+        const updateQuery = `
+            UPDATE publications
+            SET 
+                faculty_id = ?,
+                natureOfPublication = ?,
+                typeOfPublication = ?,
+                titleOfPaper = ?,
+                nameOfJournalConference = ?,
+                titleofChapter = ?,
+                nameofbook = ?,
+                nameOfPublisher = ?,
+                issnIsbn = ?,
+                authorStatus = ?,
+                firstAuthorName = ?,
+                firstAuthorAffiliation = ?,
+                coAuthors = ?,
+                indexed = ?,
+                quartile = ?,
+                impactFactor = ?,
+                doi = ?,
+                linkOfPaper = ?,
+                scopusLink = ?,
+                volume = ?,
+                pageNo = ?,
+                monthYear = ?,
+                citeAs = ?,
+                proofOfPublication = ?,
+                status = 'Applied'
+            WHERE publication_id = ?`;
+
+        const values = [
+            faculty_id, natureOfPublication, typeOfPublication, titleOfPaper,
+            nameOfJournalConference, titleofChapter, nameofbook, nameOfPublisher,
+            issnIsbn, authorStatus, firstAuthorName, firstAuthorAffiliation, coAuthors,
+            indexed, quartile, impactFactor, doi, linkOfPaper, scopusLink, volume,
+            pageNo, monthYear, citeAs, proofOfPublication, publicationId
+        ];
+
+        // Execute the update query
+        db.query(updateQuery, values, (updateErr, result) => {
+            if (updateErr) {
+                console.error("Error updating publication:", updateErr);
+                return res.status(500).json({ message: "Failed to update publication", error: updateErr });
+            }
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ message: "Publication not found" });
+            }
+
+            res.json({ message: "Publication updated successfully" });
+        });
+    });
+});
+  
+
+// Route to add patent with file upload
+app.post("/addPatent", upload.single('proofOfPatent'), (req, res) => {
+    const {
+        faculty_id,
+        category,
+        iprType,
+        applicationNumber,
+        applicantName,
+        department,
+        filingDate,
+        inventionTitle,
+        numOfInventors,
+        inventors,
+        status,
+        dateOfPublished,
+        dateOfGranted,
+    } = req.body;
+
+    // Set default values to null if not provided
+    const validDateOfPublished = dateOfPublished && dateOfPublished.trim() !== '' ? dateOfPublished : null;
+    const validDateOfGranted = dateOfGranted && dateOfGranted.trim() !== '' ? dateOfGranted : null;
+
+    // Check if a file was uploaded
+    const proofOfPatent = req.file ? req.file.path : null; // Path to uploaded file, if exists
+
+    if (!proofOfPatent) {
+        return res.status(400).send("Proof of patent file is required.");
+    }
+
+    // Check if numOfInventors is a valid number or default to 0
+    const validNumOfInventors = numOfInventors && !isNaN(numOfInventors) ? numOfInventors : 0;
+
+    // Ensure inventors is either a valid string or NULL
+    const validInventors = (Array.isArray(inventors) && inventors.length > 0) ? JSON.stringify(inventors) : null;
+
+    // SQL query to insert patent data into the database
+    const query = `
+        INSERT INTO patents (faculty_id, category, iprType, applicationNumber, applicantName, department, filingDate, 
+        inventionTitle, numOfInventors, inventors, status, dateOfPublished, dateOfGranted, proofOfPatent)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    db.query(query, [
+        faculty_id, category, iprType, applicationNumber, applicantName, department, filingDate, inventionTitle,
+        validNumOfInventors, validInventors, status, validDateOfPublished, validDateOfGranted, proofOfPatent
+    ], (err, result) => {
+        if (err) {
+            console.error("Error inserting patent:", err);
+            return res.status(500).send('Error while inserting patent');
+        }
+        res.status(200).send('Patent added successfully');
+    });
+});
+
+
+app.get('/getPatents/:faculty_id', (req, res) => {
+    const faculty_id = req.params.faculty_id;
+
+    // Query to fetch all patents for the specified faculty_id
+    const query = `SELECT * FROM patents WHERE faculty_id = ?`;
+    app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+    db.query(query, [faculty_id], (err, results) => {
+        if (err) {
+            console.error("Database error:", err);  // Log the full error for debugging
+            return res.status(500).send('Error fetching patents.');
+        }
+
+        if (!results || results.length === 0) {
+            console.log("No patents found for faculty_id:", faculty_id);  // Log if no results
+            return res.status(404).send('No patents found for this faculty.');
+        }
+
+        // Update proofOfPatent to include the public URL for file access
+        results.forEach(patent => {
+            if (patent.proofOfPatent) {
+                patent.proofOfPatent = `${patent.proofOfPatent.replace(/\\/g, '/')}`;
+            }
+        });
+        res.json(results);
+    });
+});
+app.put('/update-patent/:id', upload.single('proofOfPatent'), (req, res) => {
+    const patentId = req.params.id; // Extract the ID from the route parameter
+
+    // Fetch the existing publication details
+    const fetchQuery = "SELECT * FROM patents WHERE patent_id = ?";
+    db.query(fetchQuery, [patentId], (err, results) => {
+        if (err) {
+            console.error("Error fetching patent:", err);
+            return res.status(500).json({ message: "Error fetching patent", error: err });
+        }
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: "Patent not found" });
+        }
+
+        const existingData = results[0]; // Existing details of the publication
+
+        // Extract new data from request body, or use the existing values if not provided
+        const {
+            faculty_id = existingData.faculty_id,
+            category = existingData.category,
+            iprType= existingData.iprType,
+            applicationNumber = existingData.applicationNumber,
+            applicantName = existingData.applicantName,
+            department = existingData.department,
+            filingDate= existingData.filingDate,
+            inventionTitle= existingData.inventionTitle,
+            numOfInventors = existingData.numOfInventors,
+            inventors = existingData.inventors,
+            status = existingData.status,
+            dateOfPublished = existingData.dateOfPublished,
+            dateOfGranted = existingData.dateOfGranted
+        } = req.body;
+
+        // Handle file upload or retain the existing proofOfPublication
+        let  proofOfPatent = existingData.proofOfPatent;  // Default to the existing value
+
+        if (req.file) {
+            // If a new file is uploaded, store the new path
+            proofOfPatent = `uploads\patents\${req.file.filename}`; // Updated file path
+        }
+
+        // Update query
+        const updateQuery = `
+            UPDATE patents
+            SET 
+                faculty_id = ?,
+                category = ?,
+                iprType = ?,
+                applicationNumber = ?,
+                applicantName = ?,
+                department= ?,
+                filingDate= ?,
+                inventionTitle= ?,
+                numOfInventors= ?,
+                inventors= ?,
+                status= ?,
+                dateOfPublished= ?,
+                dateOfGranted= ?,
+                proofOfPatent= ?,
+            WHERE patent_id = ?`;
+
+        const values = [
+            faculty_id, category,
+            iprType ,
+            applicationNumber,
+            applicantName,
+            department,
+            filingDate,
+            inventionTitle,
+            numOfInventors,
+            inventors,
+            status,
+            dateOfPublished,
+            dateOfGranted,
+            proofOfPatent
+        ];
+
+        // Execute the update query
+        db.query(updateQuery, values, (updateErr, result) => {
+            if (updateErr) {
+                console.error("Error updating patent:", updateErr);
+                return res.status(500).json({ message: "Failed to update patent", error: updateErr });
+            }
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ message: "Patent not found" });
+            }
+
+            res.json({ message: "Patent updated successfully" });
+        });
+    });
+});
+
+app.post("/addSeedMoney", upload.array("proof", 5), (req, res) => {
+    const {
+        faculty_id,
+        financialYear,
+        facultyName,
+        department,
+        numStudents,
+        projectTitle,
+        amountSanctioned,
+        amountReceived,
+        objectives,
+        outcomes,
+        students // Expecting a JSON array [{ "registration": "123", "name": "John" }]
+    } = req.body;
+
+    let proofUrls = req.files.map(file => `uploads/seedmoney/${file.filename}`);
+
+    const query = `INSERT INTO SeedMoney (faculty_id, financialYear, facultyName, department, numStudents, 
+        projectTitle, amountSanctioned, amountReceived, objectives, outcomes, students, proof)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+    db.query(query, [
+        faculty_id, financialYear, facultyName, department, numStudents,
+        projectTitle, amountSanctioned, amountReceived, objectives, outcomes,
+        JSON.stringify(students), JSON.stringify(proofUrls)
+    ], (err, result) => {
+        if (err) {
+            console.error("Error inserting SeedMoney:", err);
+            return res.status(500).send("Error while inserting SeedMoney");
+        }
+        res.status(200).json({ message: "SeedMoney added successfully", seedMoneyId: result.insertId });
+    });
+});
+
+// Route to Get SeedMoney Records by Faculty ID
+app.get("/getSeedMoney/:faculty_id", (req, res) => {
+    const { faculty_id } = req.params;
+
+    const query = `SELECT * FROM SeedMoney WHERE faculty_id = ?`;
+    db.query(query, [faculty_id], (err, results) => {
+        if (err) {
+            console.error("Error fetching SeedMoney records:", err);
+            return res.status(500).send("Error fetching SeedMoney records.");
+        }
+        if (results.length === 0) {
+            return res.status(404).send("No SeedMoney records found.");
+        }
+
+        // Safely parse JSON fields before sending the response
+        results.forEach(record => {
+            try {
+                record.students = JSON.parse(record.students || "[]");
+            } catch (e) {
+                console.error("Invalid JSON in students:", record.students);
+                record.students = [];
+            }
+
+            try {
+                // Ensure `proof` is always a JSON array
+                record.proof = Array.isArray(record.proof)
+                    ? record.proof
+                    : JSON.parse(record.proof || "[]");
+            } catch (e) {
+                console.error("Invalid JSON in proof:", record.proof);
+                record.proof = [];
+            }
+        });
+
+        res.json(results);
+    });
+});
+
+// Route to Update SeedMoney
+app.put("/updateSeedMoney/:id", upload.array("proof", 5), (req, res) => {
+    const { id } = req.params;
+    const {
+        faculty_id,
+        financialYear,
+        facultyName,
+        department,
+        numStudents,
+        projectTitle,
+        amountSanctioned,
+        amountReceived,
+        objectives,
+        outcomes,
+        students // Updated students JSON array
+    } = req.body;
+
+    let proofUrls = req.files.length > 0 ? req.files.map(file => `uploads/seedmoney/${file.filename}`) : null;
+
+    // Fetch existing record
+    const fetchQuery = `SELECT * FROM SeedMoney WHERE id = ?`;
+    db.query(fetchQuery, [id], (err, results) => {
+        if (err) {
+            console.error("Error fetching SeedMoney:", err);
+            return res.status(500).send("Error fetching SeedMoney.");
+        }
+        if (results.length === 0) {
+            return res.status(404).send("SeedMoney record not found.");
+        }
+
+        const existingData = results[0];
+
+        const updateQuery = `UPDATE SeedMoney SET faculty_id=?, financialYear=?, facultyName=?, department=?, numStudents=?, 
+            projectTitle=?, amountSanctioned=?, amountReceived=?, objectives=?, outcomes=?, students=?, proof=?, updatedAt=CURRENT_TIMESTAMP WHERE id=?`;
+
+        db.query(updateQuery, [
+            faculty_id || existingData.faculty_id,
+            financialYear || existingData.financialYear,
+            facultyName || existingData.facultyName,
+            department || existingData.department,
+            numStudents || existingData.numStudents,
+            projectTitle || existingData.projectTitle,
+            amountSanctioned || existingData.amountSanctioned,
+            amountReceived || existingData.amountReceived,
+            objectives || existingData.objectives,
+            outcomes || existingData.outcomes,
+            JSON.stringify(students || JSON.parse(existingData.students || "[]")),
+            JSON.stringify(proofUrls || JSON.parse(existingData.proof || "[]")),
+            id
+        ], (updateErr) => {
+            if (updateErr) {
+                console.error("Error updating SeedMoney:", updateErr);
+                return res.status(500).send("Error updating SeedMoney.");
+            }
+            res.status(200).send("SeedMoney updated successfully.");
+        });
+    });
+});
+app.post('/addFundedProject', (req, res) => {
+    const {
+        faculty_id, financialYear, applicationNumber, agency, scheme, piName, piDept, piContact, piEmail,
+        copiName, copiDept, copiContact, copiEmail, duration, title, status, startDate, objectives, outcomes,
+        amountApplied, amountReceived, amountSanctioned, proof
+    } = req.body;
+
+    // Convert empty decimal values to NULL
+    const sanitizedAmountSanctioned = amountSanctioned === '' ? null : amountSanctioned;
+    const sanitizedAmountApplied = amountApplied === '' ? null : amountApplied;
+    const sanitizedAmountReceived = amountReceived === '' ? null : amountReceived;
+
+    const sql = `
+        INSERT INTO fundedprojects 
+        (faculty_id, financialYear, applicationNumber, agency, scheme, piName, piDept, piContact, piEmail, 
+         copiName, copiDept, copiContact, copiEmail, duration, title, status, startDate, objectives, outcomes, 
+         amountApplied, amountReceived, amountSanctioned, proof) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    db.query(sql, [
+        faculty_id, financialYear, applicationNumber, agency, scheme, piName, piDept, piContact, piEmail,
+        copiName, copiDept, copiContact, copiEmail, duration, title, status, startDate, objectives, outcomes,
+        sanitizedAmountApplied, sanitizedAmountReceived, sanitizedAmountSanctioned, proof
+    ], (err, result) => {
+        if (err) {
+            console.error("Error inserting project:", err);
+            return res.status(500).json({ error: "Database error", details: err });
+        }
+        res.status(201).json({ message: "Project added successfully", projectId: result.insertId });
+    });
+});
+
+app.get('/getFundedProjects/:id', (req, res) => {
+    const { id } = req.params;
+    const sql = 'SELECT * FROM fundedprojects WHERE faculty_id = ?';
+
+    db.query(sql, [id], (err, result) => {
+        if (err) {
+            console.error('Error fetching project:', err);
+            return res.status(500).json({ message: 'Database error' });
+        }
+        if (result.length === 0) {
+            return res.status(404).json({ message: 'Project not found' });
+        }
+        res.status(200).json(result[0]);
+    });
+});
+
+app.post('/coordinatorlogin', (req, res) => {
+    const { coordinatorid, password1, department } = req.body;
+  
+    // Query the depcorlogin table to check if the coordinatorid exists along with the department
+    const query = 'SELECT * FROM depcorlogin WHERE coordinatorid = ? AND department = ?';
+    
+    db.query(query, [coordinatorid, department], (err, results) => {
+      if (err) {
+        console.error('Error fetching data:', err.stack);
+        return res.status(500).json({ success: false, message: 'Database error' });
+      }
+  
+      if (results.length > 0) {
+        // If coordinator exists, check if the password matches
+        const coordinator = results[0];
+        if (coordinator.password === password1) {
+          // Password matches, login successful
+          res.status(200).json({ success: true, coordinatorid: coordinator.coordinatorid });
+        } else {
+          // Password doesn't match
+          res.status(401).json({ success: false, message: 'Invalid credentials' });
+        }
+      } else {
+        // Coordinator ID or department doesn't exist
+        res.status(401).json({ success: false, message: 'Invalid credentials' });
+      }
+    });
+  });
+  
+  app.get('/getAllPublications', (req, res) => {
+    const coordinatorId = req.query.coordinatorid;  // Get coordinatorId from the request query
+
+    if (!coordinatorId) {
+        return res.status(400).send('Coordinator ID is required.');
+    }
+
+    // Step 1: Fetch the coordinator's department
+    const coordinatorDepartmentQuery = `
+        SELECT department
+        FROM depcorlogin
+        WHERE coordinatorid = ?;
+    `;
+    db.query(coordinatorDepartmentQuery, [coordinatorId], (err, coordinatorResults) => {
+        if (err) {
+            console.error('Error fetching coordinator department:', err);
+            return res.status(500).send('Error fetching coordinator department.');
+        }
+
+        if (coordinatorResults.length === 0) {
+            return res.status(404).send('Coordinator not found.');
+        }
+
+        const coordinatorDepartment = coordinatorResults[0].department;
+
+        // Step 2: Fetch publications where status is "Applied" and faculty department matches the coordinator's department
+        const publicationsQuery = `
+            SELECT p.*
+            FROM publications p
+            JOIN faculty f ON p.faculty_id = f.faculty_id
+            WHERE p.status = "Applied" AND f.department = ?;
+        `;
+        db.query(publicationsQuery, [coordinatorDepartment], (err, publicationsResults) => {
+            if (err) {
+                console.error('Error fetching publications:', err);
+                return res.status(500).send('Error fetching publications.');
+            }
+
+            if (publicationsResults.length === 0) {
+                return res.status(404).send('No publications applied for approval.');
+            }
+
+            // Modify the proofOfPublication path if it exists
+            publicationsResults.forEach(pub => {
+                if (pub.proofOfPublication) {
+                    pub.proofOfPublication = `${pub.proofOfPublication.replace(/\\/g, '/')}`;
+                }
+            });
+
+            // Send the publications as a JSON response
+            res.json(publicationsResults);
+        });
+    });
+});
+
+
+// Route to approve a publication
+app.put('/approvePublication/:id', (req, res) => {
+    const publicationId = req.params.id;
+
+    const query = 'UPDATE publications SET status = ? WHERE publication_id = ?';
+
+    db.query(query, ['Approved by Department R&D Coordinator', publicationId], (err, result) => {
+        if (err) {
+            // Log the error for debugging
+            console.error('Error during approval:', err);
+            return res.status(500).json({ error: 'Failed to approve publication' });
+        }
+
+        if (result.affectedRows > 0) {
+            // Successfully updated publication
+            return res.status(200).json({ message: 'Publication approved successfully' });
+        } else {
+            // If no rows were affected, the publication ID might be invalid
+            return res.status(404).json({ error: 'Publication not found' });
+        }
+    });
+});
+app.put('/rejectPublication/:publicationId', (req, res) => {
+    const publicationId = req.params.publicationId;
+    const rejectionReason = req.body.rejectionReason;  // Get the rejection reason from the request body
+
+    // Check if the rejectionReason is empty or undefined
+    if (!rejectionReason) {
+        return res.status(400).json({ message: 'Rejection reason is required' });
+    }
+
+    // SQL query to update the status and rejection reason
+    const query = 'UPDATE publications SET status = ?, rejection_reason = ? WHERE publication_id = ?';
+
+    db.query(query, ['Rejected by Department R&D Coordinator', rejectionReason, publicationId], (error, result) => {
+        if (error) {
+            console.error('Error during rejection:', error);
+            return res.status(500).json({ message: 'Failed to reject publication' });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Publication not found' });
+        }
+
+        res.status(200).json({ message: 'Publication rejected successfully' });
+    });
+});
+
+app.get('/getAllPatents', (req, res) => {
+    const coordinatorId = req.query.coordinatorid;  // Get coordinatorId from the request query
+
+    if (!coordinatorId) {
+        return res.status(400).send('Coordinator ID is required.');
+    }
+
+    // Step 1: Fetch the coordinator's department
+    const coordinatorDepartmentQuery = `
+        SELECT department
+        FROM depcorlogin
+        WHERE coordinatorid = ?;
+    `;
+    db.query(coordinatorDepartmentQuery, [coordinatorId], (err, coordinatorResults) => {
+        if (err) {
+            console.error('Error fetching coordinator department:', err);
+            return res.status(500).send('Error fetching coordinator department.');
+        }
+
+        if (coordinatorResults.length === 0) {
+            return res.status(404).send('Coordinator not found.');
+        }
+
+        const coordinatorDepartment = coordinatorResults[0].department;
+
+        // Step 2: Fetch publications where status is "Applied" and faculty department matches the coordinator's department
+        const patentsQuery = `
+                SELECT p.*
+                FROM patents p
+                JOIN faculty f ON p.faculty_id = f.faculty_id
+                WHERE p.status IN ('filed', 'granted', 'published')
+                AND f.department = ?;`;
+        db.query(patentsQuery, [coordinatorDepartment], (err, patentsResults) => {
+            if (err) {
+                console.error('Error fetching patents:', err);
+                return res.status(500).send('Error fetching patents.');
+            }
+
+            if (patentsResults.length === 0) {
+                return res.status(404).send('No patents applied for approval.');
+            }
+
+            // Modify the proofOfPublication path if it exists
+            patentsResults.forEach(pub => {
+                if (pub.proofOfPatent) {
+                    pub.proofOfPatent = `${pub.proofOfPatent.replace(/\\/g, '/')}`;
+                }
+            });
+
+            // Send the publications as a JSON response
+            res.json(patentsResults);
+        });
+    });
+});
+
+
+// Route to approve a publication
+app.put('/approvePatent/:id', (req, res) => {
+    const patentId = req.params.id;
+
+    const query = 'UPDATE patents SET status = ? WHERE patent_id = ?';
+
+    db.query(query, ['Approved by Department R&D Coordinator', patentId], (err, result) => {
+        if (err) {
+            // Log the error for debugging
+            console.error('Error during approval:', err);
+            return res.status(500).json({ error: 'Failed to approve patent' });
+        }
+
+        if (result.affectedRows > 0) {
+            // Successfully updated publication
+            return res.status(200).json({ message: 'Patent approved successfully' });
+        } else {
+            // If no rows were affected, the publication ID might be invalid
+            return res.status(404).json({ error: 'Patent not found' });
+        }
+    });
+});
+app.put('/rejectPatent/:patentId', (req, res) => {
+    const patentId = req.params.patentId;
+    const rejectionReason = req.body.rejectionReason;  // Get the rejection reason from the request body
+
+    // Check if the rejectionReason is empty or undefined
+    if (!rejectionReason) {
+        return res.status(400).json({ message: 'Rejection reason is required' });
+    }
+
+    // SQL query to update the status and rejection reason
+    const query = 'UPDATE patents SET status = ?, rejection_reason = ? WHERE patent_id = ?';
+
+    db.query(query, ['Rejected by Department R&D Coordinator', rejectionReason, patentId], (error, result) => {
+        if (error) {
+            console.error('Error during rejection:', error);
+            return res.status(500).json({ message: 'Failed to reject patent' });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Patent not found' });
+        }
+
+        res.status(200).json({ message: 'Patent rejected successfully' });
     });
 });
 

@@ -10,6 +10,7 @@ import Patent from './pages/addpatent';
 import External from './pages/addexternal';
 import PublicationPage from './pages/addpublication';
 import  SeedMoneyPage from './pages/addseedmoney';
+import SeedmoneyForm from './pages/viewseedmoney';
 import PublicationsPage from './pages/viewpublications';
 import PatentForm from './pages/viewpatents';
 import LoginCorPage from './pages/depcorlogin';
@@ -19,6 +20,7 @@ import CorViewPublications from './pages/deptcorviewpub';
 import CorViewPatents from './pages/deptcorviewpatents';
 import Editpub from './pages/editpublications';
 import Editpat from './pages/editpatents';
+import Viewexternal from './pages/viewexternal';
 const App = () => {
   return (
     <Router>
@@ -29,11 +31,13 @@ const App = () => {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/home" element={<HomePage />}/>
           <Route path="/addpatent" element={<Patent/>}/>
-          <Route path ="/addexternalproject" element={<External/>}/>
+          <Route path ="/addproject" element={<External/>}/>
+          <Route path="/viewprojects" element={<Viewexternal/>}/>
           <Route path="/addpublication" element={<PublicationPage/>}/>
           <Route path="/addseedmoney" element={<SeedMoneyPage/>}/>
           <Route path="/viewpublications" element={<PublicationsPage/>}/>
           <Route path="/viewpatents" element={<PatentForm/>}/>
+          <Route path="/viewseedmoney" element={<SeedmoneyForm/>}/>
           <Route path="/coordinatorlogin" element={<LoginCorPage/>}/>
           <Route path="/coordinatorwelcome" element={<CorWelcome/>}/>
           <Route path="/coordinatorsidebar" element={<Corsidebar/>}/>

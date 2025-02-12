@@ -13,7 +13,7 @@ const CorViewPatents = () => {
                 return;
             }
             try {
-                const response = await fetch(`http://localhost:4002/getAllPatents?coordinatorid=${coordinatorId}`);
+                const response = await fetch(`http://localhost:5000/getAllPatents?coordinatorid=${coordinatorId}`);
                 if (!response.ok) {
                     const errorText = await response.text();
                     console.error('Error response:', errorText);
@@ -41,7 +41,7 @@ const CorViewPatents = () => {
     // Approve the publication and update the database
     const approvePatent = async (patentId) => {
         try {
-            const response = await fetch(`http://localhost:4002/approvePatent/${patentId}`, {
+            const response = await fetch(`http://localhost:5000/approvePatent/${patentId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -69,7 +69,7 @@ const CorViewPatents = () => {
         }
 
         try {
-            const response = await fetch(`http://localhost:4002/rejectPatent/${patentId}`, {
+            const response = await fetch(`http://localhost:5000/rejectPatent/${patentId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -134,7 +134,7 @@ const CorViewPatents = () => {
                                                 {pub.proofOfPatent && (
                                                     <p>
                                                         <strong>Proof of Patent:</strong>&nbsp;
-                                                        <a href={`http://localhost:5001/${pub.proofOfPatent}`} target="_blank" rel="noopener noreferrer">
+                                                        <a href={`http://localhost:5000/${pub.proofOfPatent}`} target="_blank" rel="noopener noreferrer">
                                                             View Proof
                                                         </a>
                                                     </p>

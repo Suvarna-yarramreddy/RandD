@@ -74,7 +74,7 @@ function SeedMoneyPage() {
   // Validate student registration and name only if numStudents > 0
   if (formData.numStudents > 0) {
     formData.students.forEach((student, index) => {
-      console.log(`Validating student ${index}:`, student);  // Log student details
+      console.log(`Validating student ${index}:, student`);  // Log student details
 
       if (!student.registration.trim()) {
         newErrors[`student-registration-${index}`] = `Student ${index + 1}: Registration is required.`;
@@ -217,7 +217,7 @@ const handleSubmit = async (e) => {
 
     try {
       // Send form data to backend (server)
-      const response = await fetch('http://localhost:5002/addSeedMoney', {
+      const response = await fetch('http://localhost:5000/addSeedMoney', {
         method: 'POST',
         body: formDataToSend,  // Send FormData instead of JSON
       });
@@ -235,7 +235,6 @@ const handleSubmit = async (e) => {
       }
 
       if (response.ok) {
-        alert(data.message || data); // Show success message or the text response
 
         if (data.message === 'Form submitted successfully!') {
           // Reset the form after successful submission
@@ -267,7 +266,7 @@ const handleSubmit = async (e) => {
   } else {
     // If form is invalid, scroll to the first error field
     const firstErrorField = Object.keys(errors)[0];
-    const errorField = document.querySelector(`[name=${firstErrorField}]`);
+    const errorField = document.querySelector([`name=${firstErrorField}`]);
     if (errorField) {
       errorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
@@ -424,7 +423,7 @@ const handleSubmit = async (e) => {
           </div>
         
           <div className="col-md-6 mb-3">
-  <label className="form-label">Upload Proof (Optional)</label>
+  <label className="form-label">Upload Proof</label>
   <div className="custom-file">
     <input
       type="file"

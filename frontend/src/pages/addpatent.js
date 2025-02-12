@@ -276,7 +276,7 @@ const handleSubmit = async (e) => {
       dataToSend.append('proofOfPatent', formData.proofOfPatent);
 
       const response = await axios.post(
-        "http://localhost:5001/addPatent",
+        "http://localhost:5000/addPatent",
         dataToSend,
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );

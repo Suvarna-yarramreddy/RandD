@@ -12,7 +12,7 @@ const PublicationsPage = () => {
     useEffect(() => {
         const fetchPublications = async () => {
             try {
-                const response = await fetch(`http://localhost:5002/getPublications/${faculty_id}`);
+                const response = await fetch(`http://localhost:5000/getPublications/${faculty_id}`);
                 if (!response.ok) {
                     const errorText = await response.text();
                     console.error('Error response:', errorText);
@@ -115,7 +115,7 @@ const PublicationsPage = () => {
                                                     {pub.citeAs && <p><strong>Cite As:</strong> {pub.citeAs}</p>}
                                                     {pub.proofOfPublication && (
                                                         <p><strong>Proof of Publication:</strong>
-                                                            <a href={`http://localhost:5002/${pub.proofOfPublication}`} target="_blank" rel="noopener noreferrer">View Proof</a>
+                                                            <a href={`http://localhost:5000/${pub.proofOfPublication}`} target="_blank" rel="noopener noreferrer">View Proof</a>
                                                         </p>
                                                     )}
                                                 </div>

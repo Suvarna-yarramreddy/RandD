@@ -19,7 +19,7 @@ const HomePage = () => {
   useEffect(() => {
     // Fetch overall statistics
     axios
-      .get(`http://localhost:5009/api/stats/${facultyId}`)
+      .get(`http://localhost:5000/api/stats/${facultyId}`)
       .then((response) => {
         setStats(response.data);
         setLoading(false);

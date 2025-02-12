@@ -36,7 +36,7 @@ const EditPatentsPage = () => {
                 }
             }
     
-            const response = await fetch(`http://localhost:5001/update-patent/${pub.patent_id}`, {
+            const response = await fetch(`http://localhost:5000/update-patent/${pub.patent_id}`, {
                 method: 'PUT',
                 body: formDataToSend,
             });

@@ -13,7 +13,7 @@ const PatentsPage = () => {
     useEffect(() => {
         const fetchPatents = async () => {
             try {
-                const response = await fetch(`http://localhost:5001/getpatents/${faculty_id}`);
+                const response = await fetch(`http://localhost:5000/getpatents/${faculty_id}`);
                 if (!response.ok) {
                     const errorText = await response.text();
                     throw new Error(errorText || 'Failed to fetch patents');
@@ -104,7 +104,7 @@ const PatentsPage = () => {
                                                 {pat.proofOfPatent && (
                                                     <p>
                                                         <strong>Proof of Patent:</strong>&nbsp;
-                                                        <a href={`http://localhost:5001/${pat.proofOfPatent}`} target="_blank" rel="noopener noreferrer">
+                                                        <a href={`http://localhost:5000/${pat.proofOfPatent}`} target="_blank" rel="noopener noreferrer">
                                                             View Proof
                                                         </a>
                                                     </p>

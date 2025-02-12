@@ -36,7 +36,7 @@ const EditPublicationsPage = () => {
                 }
             }
     
-            const response = await fetch(`http://localhost:5002/update-publication/${pub.publication_id}`, {
+            const response = await fetch(`http://localhost:5000/update-publication/${pub.publication_id}`, {
                 method: 'PUT',
                 body: formDataToSend,
             });

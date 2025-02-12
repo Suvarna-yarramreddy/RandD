@@ -13,7 +13,7 @@ const CorViewPublications = () => {
                 return;
             }
             try {
-                const response = await fetch(`http://localhost:4001/getAllPublications?coordinatorid=${coordinatorId}`);
+                const response = await fetch(`http://localhost:5000/getAllPublications?coordinatorid=${coordinatorId}`);
                 if (!response.ok) {
                     const errorText = await response.text();
                     console.error('Error response:', errorText);
@@ -41,7 +41,7 @@ const CorViewPublications = () => {
     // Approve the publication and update the database
     const approvePublication = async (publicationId) => {
         try {
-            const response = await fetch(`http://localhost:4001/approvePublication/${publicationId}`, {
+            const response = await fetch(`http://localhost:5000/approvePublication/${publicationId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -69,7 +69,7 @@ const CorViewPublications = () => {
         }
 
         try {
-            const response = await fetch(`http://localhost:4001/rejectPublication/${publicationId}`, {
+            const response = await fetch(`http://localhost:5000/rejectPublication/${publicationId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -161,7 +161,7 @@ const CorViewPublications = () => {
                                                     {pub.citeAs && <p><strong>Cite As:</strong> {pub.citeAs}</p>}
                                                     {pub.proofOfPublication && (
                                                         <p><strong>Proof of Publication:</strong> 
-                                                        <a href={`http://localhost:5002/${pub.proofOfPublication}`} target="_blank" rel="noopener noreferrer">
+                                                        <a href={`http://localhost:5000/${pub.proofOfPublication}`} target="_blank" rel="noopener noreferrer">
                                                             View Proof
                                                         </a>
                                                     </p>
