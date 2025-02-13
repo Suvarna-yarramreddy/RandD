@@ -25,6 +25,9 @@ import LoginInstCoordinator from './pages/instcorlogin';
 import InstCoSidebar from './pages/instcorsidebar';
 import InstituteCorViewPublications from './pages/instviewpub';
 import ConsultancyForm from './pages/addconsultant';
+import InstCorViewPatents from './pages/instviewpatents';
+import ResearchForm from './pages/addscholar';
+import Viewscholars from './pages/viewscholar';
 const App = () => {
   return (
     <Router>
@@ -53,6 +56,9 @@ const App = () => {
           <Route path="/instcorsidebar" element={<InstCoSidebar/>}/>
           <Route path="/instcorviewpublications" element={<InstituteCorViewPublications/>}/>
           <Route path="/addconsultant" element={<ConsultancyForm/>}/>
+          <Route path="/instcorviewpatents" element={<InstCorViewPatents/>}/>
+          <Route path="/addscholar" element= {<ResearchForm/>}/>
+          <Route path="/viewscholars" element={<Viewscholars/>}/>
         </Routes>
       </Layout>
     </Router>

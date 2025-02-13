@@ -2,70 +2,74 @@ import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const EditPatentsPage = () => {
-    const location = useLocation();
-    const navigate = useNavigate();
-    const pub = location.state.patents; // Get the publication data passed via state
-
-    const [formData, setFormData] = useState({
-        ...pub // Set initial form data with the publication details
-    });
-
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
-    const handleFileChange = (e) => {
-        const { name, files } = e.target;
-        if (files.length > 0) {
-            setFormData(prev => ({
-                ...prev,
-                [name]: files[0], // Update with the new file
-            }));
-        }
-    };
-    const handleSubmit = async (e) => {
+   const location = useLocation();
+       const navigate = useNavigate();
+       const pat = location.state.patents; // Get the patlication data passed via state
+   
+       const [formData, setFormData] = useState({
+           ...pat // Set initial form data with the patlication details
+       });
+   
+       const handleInputChange = (e) => {
+           const { name, value } = e.target;
+           setFormData(prev => ({ ...prev, [name]: value }));
+       };
+       const handleFileChange = (e) => {
+           const { name, files } = e.target;
+           if (files.length > 0) {
+               setFormData(prev => ({
+                   ...prev,
+                   [name]: files[0], // Update with the new file
+               }));
+           }
+       };
+       const handleSubmit = async (e) => {
         e.preventDefault();
+        console.log("Submitting Form Data:", formData); // Debugging log
     
         try {
             const formDataToSend = new FormData();
-    
-            // Append only defined and non-empty values
             for (const [key, value] of Object.entries(formData)) {
                 if (value !== undefined && value !== null) {
-                    formDataToSend.append(key, value);
-                }
+                        formDataToSend.append(key, value);
+                    }
             }
     
-            const response = await fetch(`http://localhost:5000/update-patent/${pub.patent_id}`, {
+            console.log("Sending to API:", formDataToSend); // Debugging log
+    
+            const response = await fetch(`http://localhost:5000/update-patent/${pat.patent_id}`, {
                 method: 'PUT',
                 body: formDataToSend,
             });
     
+    
             if (!response.ok) {
-                const errorDetails = await response.json(); // If server provides error details
-                console.error('Error details:', errorDetails);
-                throw new Error('Failed to update patent');
+                const errorDetails = await response.json();
+                console.error('Server Error:', errorDetails);
+                alert(`Failed to update patent`);
+                return;
             }
     
             const result = await response.json();
-            console.log(result.message); // Log the success message
-            navigate('/viewpatents'); // Redirect on success
+            console.log(result.message);
+            alert("Patent updated successfully!");
+            navigate('/viewpatents');
         } catch (error) {
             console.error('Error updating patent:', error);
             alert(error.message || 'Failed to update patent');
         }
     };
     
-    const handleCancel = () => {
-        navigate('/viewpatents'); // Navigate to view publications page on cancel
-    };
-
+       
+       const handleCancel = () => {
+           navigate('/viewpatents'); // Navigate to view patlications page on cancel
+       };
     return (
         <div className="container my-4">
             <h2>Edit Patent</h2>
             <form onSubmit={handleSubmit}>
                 <div className="row">
-                    {pub.category && (
+                    {pat.category && (
                         <div className="col-md-6 mb-3">
                             <label className="form-label">Category</label>
                             <input
@@ -77,7 +81,7 @@ const EditPatentsPage = () => {
                             />
                         </div>
                     )}
-                    {pub.iprType && (
+                    {pat.iprType && (
                         <div className="col-md-6 mb-3">
                             <label className="form-label">Type of IPR</label>
                             <input
@@ -89,7 +93,7 @@ const EditPatentsPage = () => {
                             />
                         </div>
                     )}
-                    {pub.applicationNumber && (
+                    {pat.applicationNumber && (
                         <div className="col-md-6 mb-3">
                             <label className="form-label">Application Number</label>
                             <input
@@ -101,7 +105,7 @@ const EditPatentsPage = () => {
                             />
                         </div>
                     )}
-                    {pub.applicantName && (
+                    {pat.applicantName && (
                         <div className="col-md-6 mb-3">
                             <label className="form-label">Applicant Name</label>
                             <input
@@ -113,7 +117,7 @@ const EditPatentsPage = () => {
                             />
                         </div>
                     )}
-                    {pub.department && (
+                    {pat.department && (
                         <div className="col-md-6 mb-3">
                             <label className="form-label">Department</label>
                             <input
@@ -125,19 +129,19 @@ const EditPatentsPage = () => {
                             />
                         </div>
                     )}
-                    {pub.filingDate && (
+                    {pat.filingDate && (
                         <div className="col-md-6 mb-3">
                             <label className="form-label">Filing Date</label>
                             <input
                                 type="text"
                                 className="form-control"
                                 name="filingDate"
-                                value={formData.filingDate}
+                                value={formData.filingDate.split('T')[0]}
                                 onChange={handleInputChange}
                             />
                         </div>
                     )}
-                    {pub.inventionTitle && (
+                    {pat.inventionTitle && (
                         <div className="col-md-6 mb-3">
                             <label className="form-label">Invention Title</label>
                             <input
@@ -149,7 +153,7 @@ const EditPatentsPage = () => {
                             />
                         </div>
                     )}
-                    {pub.numOfInventors && (
+                    {pat.numOfInventors && (
                         <div className="col-md-6 mb-3">
                             <label className="form-label">Num Of Inventors</label>
                             <input
@@ -161,7 +165,7 @@ const EditPatentsPage = () => {
                             />
                         </div>
                     )}
-                    {pub.inventors && (
+                    {pat.inventors && (
                         <div className="col-md-6 mb-3">
                             <label className="form-label">Inventors</label>
                             <input
@@ -173,49 +177,49 @@ const EditPatentsPage = () => {
                             />
                         </div>
                     )}
-                    {pub.status && (
+                    {pat.status1 && (
                         <div className="col-md-6 mb-3">
                             <label className="form-label">Status</label>
                             <input
                                 type="text"
                                 className="form-control"
-                                name="status"
-                                value={formData.status}
+                                name="status1"
+                                value={formData.status1}
                                 onChange={handleInputChange}
                             />
                         </div>
                     )}
-                    {pub.dateOfPublished && (
+                    {pat.dateOfPublished && (
                         <div className="col-md-6 mb-3">
-                            <label className="form-label">Date Of Published</label>
+                            <label className="form-label">Date Of published</label>
                             <input
                                 type="text"
                                 className="form-control"
                                 name="dateOfPublished"
-                                value={formData.dateOfPublished}
+                                value={formData.dateOfPublished.split('T')[0]}
                                 onChange={handleInputChange}
                             />
                         </div>
                     )}
-                    {pub.dateOfGranted && (
+                    {pat.dateOfGranted && (
                         <div className="col-md-6 mb-3">
                             <label className="form-label">Date Of Granted</label>
                             <input
                                 type="text"
                                 className="form-control"
                                 name="dateOfGranted"
-                                value={formData.dateOfGranted}
+                                value={formData.dateOfGranted.split('T')[0]}
                                 onChange={handleInputChange}
                             />
                         </div>
                     )}
                    
-                    {pub.proofOfPatent && (
+                    {pat.proofOfPatent && (
                         <div className="col-md-6 mb-3">
                             <label className="form-label">Proof of Patent</label>
                             <div>
                                 <small>Existing file:</small>
-                            <a href={`http://localhost:5001/${pub.proofOfPatent}`} target="_blank" rel="noopener noreferrer">View Proof</a>
+                            <a href={`http://localhost:5000/${pat.proofOfPatent}`} target="_blank" rel="noopener noreferrer">View Proof</a>
                             </div>
                             <input
                                 type="file"

@@ -16,7 +16,7 @@ const PatentForm = () => {
     inventionTitle: "",
     numOfInventors: 0,
     inventors: [],
-    status: "",
+    status1: "",
     dateOfPublished: "",
     dateOfGranted: "",
     proofOfPatent: null,
@@ -186,18 +186,18 @@ const validateField = (name, value, newErrors) => {
         break;
       
 
-    case "status":
+    case "status1":
       if (!value) {
-        newErrors.status = "Please select the status of the patent (Filed, Published, Granted).";
+        newErrors.status1 = "Please select the status of the patent (Filed, Published, Granted).";
       } else {
-        delete newErrors.status;
+        delete newErrors.status1;
       }
       break;
 
     case "dateOfPublished":
-      if (formData.status === "published" && !value) {
+      if (formData.status1 === "published" && !value) {
         newErrors.dateOfPublished = "Please enter the date when the patent was published.";
-      } else if (formData.status === "published" && isNaN(new Date(value))) {
+      } else if (formData.status1 === "published" && isNaN(new Date(value))) {
         newErrors.dateOfPublished = "Please select a valid publication date.";
       } else {
         delete newErrors.dateOfPublished;
@@ -205,9 +205,9 @@ const validateField = (name, value, newErrors) => {
       break;
 
     case "dateOfGranted":
-      if (formData.status === "granted" && !value) {
+      if (formData.status1=== "granted" && !value) {
         newErrors.dateOfGranted = "Please enter the date when the patent was granted.";
-      } else if (formData.status === "granted" && isNaN(new Date(value))) {
+      } else if (formData.status1 === "granted" && isNaN(new Date(value))) {
         newErrors.dateOfGranted = "Please select a valid granted date.";
       } else {
         delete newErrors.dateOfGranted;
@@ -455,25 +455,25 @@ const handleSubmit = async (e) => {
 
 
 
-        {/* Status and Conditional Date Fields */}
+        {/* Status1status and Conditional Date Fields */}
         <div className="row">
           <div className="col-md-6 mb-3">
             <label>Status<span style={{ color: "red" }}>*</span></label>
             <select
-              name="status"
+              name="status1"
               className="form-control"
-              value={formData.status}
+              value={formData.status1}
               onChange={handleChange}
             >
-              <option value="">Select Status</option>
+              <option value="">Select status</option>
               <option value="filed">Filed</option>
               <option value="published">Published</option>
               <option value="granted">Granted</option>
             </select>
-            {errors.status && <div className="text-danger">{errors.status}</div>}
+            {errors.status1 && <div className="text-danger">{errors.status1}</div>}
           </div>
 
-          {formData.status === "published" && (
+          {formData.status1 === "published" && (
             <div className="col-md-6 mb-3">
               <label>Date of Publication<span style={{ color: "red" }}>*</span></label>
               <input
@@ -487,7 +487,7 @@ const handleSubmit = async (e) => {
             </div>
           )}
 
-          {formData.status === "granted" && (
+          {formData.status1 === "granted" && (
             <div className="col-md-6 mb-3">
               <label>Date of Granted<span style={{ color: "red" }}>*</span></label>
               <input

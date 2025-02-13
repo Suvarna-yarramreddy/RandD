@@ -81,18 +81,18 @@ const InstituteCorViewPublications = () => {
     };
 
     return (
-        <div className="container my-4">
-            <h1 className="text-center text-dark mb-4">Institute Coordinator: Pending Publications</h1>
+        <div className="container mt-2">
+            <h2 className="text-center text-dark mb-4">Pending Publications</h2>
             {publications.length > 0 ? (
                 <div className="row">
                     {publications.map(pub => (
                         <div className="col-md-6 mb-4" key={pub.publication_id}>
                             <div className="card">
                                 <div className="card-body d-flex flex-column">
-                                <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap d-md-flex"
-                                            style={{ minWidth: "0" }}>
+                                <div className=" justify-content-between align-items-center mb-3 flex-wrap "
+                                            >
                                             <h5 className="card-title" style={{ wordBreak: "break-word", flex: "1 1 auto" }}>
-                                                Cite As:&nbsp;
+                                                CiteAs:&nbsp;
                                                 <a
                                                     href="#!"
                                                     onClick={() => togglePublicationDetails(pub.publication_id)}
@@ -184,22 +184,31 @@ const InstituteCorViewPublications = () => {
                                 </div>
 
                                 {publicationToReject === pub.publication_id && (
-                                    <div className="mt-3">
-                                        <textarea
-                                            className="form-control"
-                                            rows="3"
-                                            value={rejectionReason}
-                                            onChange={(e) => setRejectionReason(e.target.value)}
-                                            placeholder="Enter reason for rejection"
-                                        />
+                                <div className="mt-3">
+                                    <textarea
+                                        className="form-control"
+                                        rows="3"
+                                        value={rejectionReason}
+                                        onChange={(e) => setRejectionReason(e.target.value)}
+                                        placeholder="Enter reason for rejection"
+                                    />
+                                    <div className="d-flex gap-2 mt-2">
                                         <button 
-                                            className="btn btn-danger w-100 mt-2" 
+                                            className="btn btn-danger w-50" 
                                             onClick={() => rejectPublication(pub.publication_id)}
                                         >
                                             Submit Rejection
                                         </button>
+                                        <button 
+                                            className="btn btn-secondary w-50" 
+                                            onClick={() => setPublicationToReject(null)} // Cancel rejection
+                                        >
+                                            Cancel
+                                        </button>
                                     </div>
-                                )}
+                                </div>
+                            )}
+
                             </div>
                         </div>
                     ))}

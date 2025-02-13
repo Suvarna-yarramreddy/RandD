@@ -95,8 +95,8 @@ const CorViewPublications = () => {
     };
 
     return (
-        <div className="container my-4">
-            <h1 className="text-center text-dark mb-4">Publications Pending Approval</h1>
+        <div className="container mt-2">
+            <h2 className="text-center text-dark mb-4">Publications Pending Approval</h2>
             {publications.length > 0 ? (
                 <div className="row">
                     {publications.map(pub => (
@@ -104,7 +104,7 @@ const CorViewPublications = () => {
                             <div className="card">
                                 <div className="card-body d-flex flex-column">
                                 <div 
-                                        className="d-flex justify-content-between align-items-center mb-3 flex-wrap d-md-flex"
+                                        className="justify-content-between align-items-center mb-3 flex-wrap d-md-flex"
                                         style={{ minWidth: "0" }} // Prevents overflow
                                     >
                                         <h5 className="card-title" style={{ wordBreak: "break-word", flex: "1 1 auto" }}>
@@ -212,12 +212,20 @@ const CorViewPublications = () => {
                                             onChange={(e) => setRejectionReason(e.target.value)}
                                             placeholder="Enter reason for rejection"
                                         />
-                                        <button 
-                                            className="btn btn-danger w-100 mt-2" 
-                                            onClick={() => rejectPublication(pub.publication_id)} // Handle rejection
-                                        >
-                                            Submit Rejection
-                                        </button>
+                                        <div className="d-flex gap-2 mt-2">
+                                            <button 
+                                                className="btn btn-danger w-50" 
+                                                onClick={() => rejectPublication(pub.publication_id)}
+                                            >
+                                                Submit Rejection
+                                            </button>
+                                            <button 
+                                                className="btn btn-secondary w-50" 
+                                                onClick={() => setPublicationToReject(null)} // Cancel rejection
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
                                     </div>
                                 )}
                             </div>

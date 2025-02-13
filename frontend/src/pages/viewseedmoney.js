@@ -37,7 +37,7 @@ const SeedMoneyPage = () => {
                     {seedMoneyApplications.map(app => (
                         <div className="col-md-6 mb-4" key={app.id}>
                             <div className="card">
-                                <div className="card-body d-flex flex-column">
+                                <div className="card-body flex-column">
                                     <h5 className="card-title">
                                         <strong>Project Title: </strong>
                                         <a

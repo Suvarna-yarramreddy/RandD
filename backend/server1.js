@@ -271,7 +271,11 @@ app.get('/api/stats/:facultyId', async (req, res) => {
               dir = './uploads/publications/';
           } else if (req.url.includes('addSeedMoney')) {
               dir = './uploads/seedmoney/';
-          } else {
+          }  else if (req.url.includes('addConsultancy')) {
+            dir = './uploads/consultancy/';
+        } else if (req.url.includes('addResearch')) {
+            dir = './uploads/research/';
+        } else {
               dir = './uploads/others/'; // Default directory
           }
   
@@ -490,7 +494,6 @@ app.put('/update-publication/:id', upload.single('proofOfPublication'), (req, re
     });
 });
   
-
 // Route to add patent with file upload
 app.post("/addPatent", upload.single('proofOfPatent'), (req, res) => {
     const {
@@ -504,7 +507,7 @@ app.post("/addPatent", upload.single('proofOfPatent'), (req, res) => {
         inventionTitle,
         numOfInventors,
         inventors,
-        status,
+        status1,
         dateOfPublished,
         dateOfGranted,
     } = req.body;
@@ -514,7 +517,7 @@ app.post("/addPatent", upload.single('proofOfPatent'), (req, res) => {
     const validDateOfGranted = dateOfGranted && dateOfGranted.trim() !== '' ? dateOfGranted : null;
 
     // Check if a file was uploaded
-    const proofOfPatent = req.file ? req.file.path : null; // Path to uploaded file, if exists
+    const proofOfPatent = req.file ? req.file.path : null;
 
     if (!proofOfPatent) {
         return res.status(400).send("Proof of patent file is required.");
@@ -526,16 +529,19 @@ app.post("/addPatent", upload.single('proofOfPatent'), (req, res) => {
     // Ensure inventors is either a valid string or NULL
     const validInventors = (Array.isArray(inventors) && inventors.length > 0) ? JSON.stringify(inventors) : null;
 
+    // Default status as "Applied"
+    const status = "Applied";
+
     // SQL query to insert patent data into the database
     const query = `
         INSERT INTO patents (faculty_id, category, iprType, applicationNumber, applicantName, department, filingDate, 
-        inventionTitle, numOfInventors, inventors, status, dateOfPublished, dateOfGranted, proofOfPatent)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        inventionTitle, numOfInventors, inventors, status1, dateOfPublished, dateOfGranted, proofOfPatent, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     db.query(query, [
         faculty_id, category, iprType, applicationNumber, applicantName, department, filingDate, inventionTitle,
-        validNumOfInventors, validInventors, status, validDateOfPublished, validDateOfGranted, proofOfPatent
+        validNumOfInventors, validInventors, status1, validDateOfPublished, validDateOfGranted, proofOfPatent, status
     ], (err, result) => {
         if (err) {
             console.error("Error inserting patent:", err);
@@ -550,7 +556,11 @@ app.get('/getPatents/:faculty_id', (req, res) => {
     const faculty_id = req.params.faculty_id;
 
     // Query to fetch all patents for the specified faculty_id
-    const query = `SELECT * FROM patents WHERE faculty_id = ?`;
+    const query = `SELECT * FROM patents 
+    WHERE faculty_id = ? 
+    AND (status = 'Approved by Institute R&D Coordinator' 
+    OR status = 'Rejected by Institute R&D Coordinator' 
+    OR status = 'Rejected by Department R&D Coordinator')`;
     app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
     db.query(query, [faculty_id], (err, results) => {
@@ -572,12 +582,19 @@ app.get('/getPatents/:faculty_id', (req, res) => {
         res.json(results);
     });
 });
-app.put('/update-patent/:id', upload.single('proofOfPatent'), (req, res) => {
-    const patentId = req.params.id; // Extract the ID from the route parameter
 
-    // Fetch the existing publication details
+
+
+// Function to convert ISO date to MySQL date format (YYYY-MM-DD)
+const formatDate = (date) => {
+    return date ? new Date(date).toISOString().split('T')[0] : null;
+};
+app.put('/update-patent/:id', upload.single('proofOfPatent'), (req, res) => {
+    const patent_id = req.params.id;
+
+    // Fetch the existing patent details
     const fetchQuery = "SELECT * FROM patents WHERE patent_id = ?";
-    db.query(fetchQuery, [patentId], (err, results) => {
+    db.query(fetchQuery, [patent_id], (err, results) => {
         if (err) {
             console.error("Error fetching patent:", err);
             return res.status(500).json({ message: "Error fetching patent", error: err });
@@ -587,32 +604,44 @@ app.put('/update-patent/:id', upload.single('proofOfPatent'), (req, res) => {
             return res.status(404).json({ message: "Patent not found" });
         }
 
-        const existingData = results[0]; // Existing details of the publication
+        const existingData = results[0];
 
-        // Extract new data from request body, or use the existing values if not provided
+        // Extract request data, keeping existing values if not provided
         const {
             faculty_id = existingData.faculty_id,
             category = existingData.category,
-            iprType= existingData.iprType,
+            iprType = existingData.iprType,
             applicationNumber = existingData.applicationNumber,
             applicantName = existingData.applicantName,
             department = existingData.department,
-            filingDate= existingData.filingDate,
-            inventionTitle= existingData.inventionTitle,
+            filingDate = existingData.filingDate,
+            inventionTitle = existingData.inventionTitle,
             numOfInventors = existingData.numOfInventors,
             inventors = existingData.inventors,
-            status = existingData.status,
             dateOfPublished = existingData.dateOfPublished,
             dateOfGranted = existingData.dateOfGranted
         } = req.body;
 
-        // Handle file upload or retain the existing proofOfPublication
-        let  proofOfPatent = existingData.proofOfPatent;  // Default to the existing value
+        // Convert dates to MySQL format
+        const formattedFilingDate = formatDate(filingDate);
+        const formattedDateOfPublished = formatDate(dateOfPublished) || existingData.dateOfPublished;
+        const formattedDateOfGranted = formatDate(dateOfGranted);
 
+        // Convert numOfInventors to integer
+        const numInventorsParsed = parseInt(numOfInventors, 10);
+
+        // Convert inventors to JSON if needed
+        const formattedInventors = typeof inventors === 'string' ? inventors : JSON.stringify(inventors);
+
+        // Handle file upload
+        let proofOfPatent = existingData.proofOfPatent;
         if (req.file) {
-            // If a new file is uploaded, store the new path
-            proofOfPatent = `uploads\patents\${req.file.filename}`; // Updated file path
+            proofOfPatent = `uploads/patents/${req.file.filename}`;
         }
+        proofOfPatent = proofOfPatent.replace(/\\/g, '/'); // Fix Windows file path
+
+        // Override status to "Applied" on every update
+        const updatedStatus = "Applied";
 
         // Update query
         const updateQuery = `
@@ -623,31 +652,33 @@ app.put('/update-patent/:id', upload.single('proofOfPatent'), (req, res) => {
                 iprType = ?,
                 applicationNumber = ?,
                 applicantName = ?,
-                department= ?,
-                filingDate= ?,
-                inventionTitle= ?,
-                numOfInventors= ?,
-                inventors= ?,
-                status= ?,
-                dateOfPublished= ?,
-                dateOfGranted= ?,
-                proofOfPatent= ?,
+                department = ?,
+                filingDate = ?,
+                inventionTitle = ?,
+                numOfInventors = ?,
+                inventors = ?,
+                status = ?,
+                dateOfPublished = ?,
+                dateOfGranted = ?,
+                proofOfPatent = ?
             WHERE patent_id = ?`;
 
         const values = [
-            faculty_id, category,
-            iprType ,
+            faculty_id,
+            category,
+            iprType,
             applicationNumber,
             applicantName,
             department,
-            filingDate,
+            formattedFilingDate,
             inventionTitle,
-            numOfInventors,
-            inventors,
-            status,
-            dateOfPublished,
-            dateOfGranted,
-            proofOfPatent
+            numInventorsParsed,
+            formattedInventors,
+            updatedStatus, // Always set to "Applied"
+            formattedDateOfPublished,
+            formattedDateOfGranted,
+            proofOfPatent,
+            patent_id
         ];
 
         // Execute the update query
@@ -661,10 +692,11 @@ app.put('/update-patent/:id', upload.single('proofOfPatent'), (req, res) => {
                 return res.status(404).json({ message: "Patent not found" });
             }
 
-            res.json({ message: "Patent updated successfully" });
+            res.json({ message: "Patent updated successfully. Status set to 'Applied'." });
         });
     });
 });
+
 
 app.post("/addSeedMoney", upload.array("proof", 5), (req, res) => {
     try {
@@ -849,6 +881,97 @@ app.get('/getFundedProjects/:id', (req, res) => {
     });
 });
 
+app.post('/addConsultancy', (req, res) => {
+    const {
+        faculty_id, financialYear, department, startdateofProject, numoffaculty, titleofconsultancy, 
+        domainofconsultancy, clientorganization, clientaddress, amountreceived, dateofamountreceived, 
+        facilities, report, faculties
+    } = req.body;
+
+    // Convert empty decimal values to NULL
+    const sanitizedAmountReceived = amountreceived === '' ? null : amountreceived;
+
+    // Convert faculties array to JSON string
+    const facultiesJson = JSON.stringify(faculties);
+
+    const sql = `
+        INSERT INTO consultancy_projects 
+        (faculty_id, financialYear, department, startdateofProject, numoffaculty, titleofconsultancy, 
+         domainofconsultancy, clientorganization, clientaddress, amountreceived, dateofamountreceived, 
+         facilities, report, faculties) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    db.query(sql, [
+        faculty_id, financialYear, department, startdateofProject, numoffaculty, titleofconsultancy, 
+        domainofconsultancy, clientorganization, clientaddress, sanitizedAmountReceived, dateofamountreceived, 
+        facilities, report, facultiesJson
+    ], (err, result) => {
+        if (err) {
+            console.error("Error inserting consultancy project:", err);
+            return res.status(500).json({ error: "Database error", details: err });
+        }
+        res.status(201).json({ message: "Consultancy project added successfully", consultancyId: result.insertId });
+    });
+});
+
+app.post("/addResearch", upload.fields([
+    { name: "admissionLetter", maxCount: 1 },
+    { name: "guideAllotmentLetter", maxCount: 1 },
+    { name: "completionProceedings", maxCount: 1 }
+]), (req, res) => {
+    const {
+        faculty_id,
+        guideName,
+        guideDepartment,
+        scholarName,
+        scholarDepartment,
+        admissionDate,
+        university,
+        workTitle,
+        admissionStatus,
+        awardDate,
+        fellowship
+    } = req.body;
+
+    const admissionLetter = req.files["admissionLetter"] ? req.files["admissionLetter"][0].path : null;
+    const guideAllotmentLetter = req.files["guideAllotmentLetter"] ? req.files["guideAllotmentLetter"][0].path : null;
+    const completionProceedings = req.files["completionProceedings"] ? req.files["completionProceedings"][0].path : null;
+
+    // If awardDate is an empty string, set it to null
+    const formattedAwardDate = awardDate && awardDate.trim() !== "" ? awardDate : null;
+
+    const query = `
+        INSERT INTO research (faculty_id, guideName, guideDepartment, scholarName, scholarDepartment, admissionDate, 
+        university, workTitle, admissionStatus, awardDate, fellowship, admissionLetter, guideAllotmentLetter, completionProceedings)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    db.query(query, [
+        faculty_id, guideName, guideDepartment, scholarName, scholarDepartment, admissionDate,
+        university, workTitle, admissionStatus, formattedAwardDate, fellowship, admissionLetter,
+        guideAllotmentLetter, completionProceedings
+    ], (err, result) => {
+        if (err) {
+            console.error("Error inserting research data:", err);
+            return res.status(500).send("Error while inserting research data");
+        }
+        res.status(200).send("Research Scholar data added successfully");
+    });
+});
+
+app.get('/getscholars/:faculty_id', (req, res) => {
+    const faculty_id = req.params.faculty_id;
+    const query = `SELECT * FROM research WHERE faculty_id = ?`;
+
+    db.query(query, [faculty_id], (err, results) => {
+        if (err) {
+            console.error('Error fetching scholars:', err);
+            return res.status(500).json({ error: 'Failed to fetch research scholars' });
+        }
+        res.json(results);
+    });
+});
 
 app.post('/coordinatorlogin', (req, res) => {
     const { coordinatorid, password1, department } = req.body;
@@ -1013,7 +1136,7 @@ app.get('/getAllPatents', (req, res) => {
                 SELECT p.*
                 FROM patents p
                 JOIN faculty f ON p.faculty_id = f.faculty_id
-                WHERE p.status IN ('filed', 'granted', 'published')
+                WHERE p.status IN ('Applied')
                 AND f.department = ?;`;
         db.query(patentsQuery, [coordinatorDepartment], (err, patentsResults) => {
             if (err) {
@@ -1168,6 +1291,66 @@ app.put("/rejectPublicationOfInst/:publicationId", (req, res) => {
     });
 });
 
+app.get("/getAllPatentsbyInst", (req, res) => {
+    const sql = `
+        SELECT * FROM patents 
+        WHERE status = 'Approved by Department R&D Coordinator'
+    `;
+
+    db.query(sql, (err, results) => {
+        if (err) {
+            return res.status(500).json({ success: false, error: err });
+        }
+        res.json(results);
+    });
+});
+app.put("/approvePatentbyInst/:patent_id", (req, res) => {
+    const { patent_id } = req.params;
+
+    if (!patent_id) {
+        return res.status(400).json({ success: false, message: "Patent ID is required" });
+    }
+
+    const sql = `
+        UPDATE patents
+        SET status = 'Approved by Institute R&D Coordinator' 
+        WHERE patent_id = ?
+    `;
+
+    db.query(sql, [patent_id], (err, result) => {
+        if (err) {
+            return res.status(500).json({ success: false, error: err });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ success: false, message: "Patent not found" });
+        }
+        res.json({ success: true, message: "Patent approved successfully" });
+    });
+});
+app.put("/rejectPatentbyInst/:patent_id", (req, res) => {
+    const { patent_id } = req.params;
+    const { rejectionReason } = req.body;
+
+    if (!patent_id || !rejectionReason.trim()) {
+        return res.status(400).json({ success: false, message: "Patent ID and rejection reason are required" });
+    }
+
+    const sql = `
+        UPDATE patents 
+        SET status = 'Rejected by Institute R&D Coordinator', rejection_reason = ? 
+        WHERE patent_id = ?
+    `;
+
+    db.query(sql, [rejectionReason, patent_id], (err, result) => {
+        if (err) {
+            return res.status(500).json({ success: false, error: err });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ success: false, message: "Patent not found" });
+        }
+        res.json({ success: true, message: "Patent rejected successfully" });
+    });
+});
 
 // Start Server
 const PORT = 5000;

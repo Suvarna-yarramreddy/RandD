@@ -55,7 +55,7 @@ const FundedProjectsPage = () => {
                         <div className="col-md-6 mb-4" key={proj.id}>
                             <div className="card">
                                 <div className="card-body d-flex flex-column">
-                                    <div className="d-flex justify-content-between align-items-center mb-3">
+                                    <div className=" justify-content-between align-items-center mb-3">
                                         <h5 className="card-title">
                                             Project Title:&nbsp;
                                             <a

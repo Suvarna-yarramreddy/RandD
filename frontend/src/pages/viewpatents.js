@@ -44,7 +44,7 @@ const PatentsPage = () => {
                         <div className="col-md-6 mb-4" key={pat.patent_id}>
                             <div className="card">
                                 <div className="card-body d-flex flex-column">
-                                <div className="d-flex justify-content-between align-items-center mb-3">
+                                <div className=" justify-content-between align-items-center mb-3">
                                     <h5 className="card-title">
                                         Title of Invention:&nbsp;
                                         <a
@@ -76,6 +76,19 @@ const PatentsPage = () => {
                                                     Edit
                                                 </button>
                                             )}
+                                            {pat.status === 'Rejected by Institute R&D Coordinator' && pat.rejection_reason && (
+                                                <div className="mt-2">
+                                                    <strong>Reason:</strong> {pat.rejection_reason}
+                                                </div>
+                                            )}
+                                            {pat.status === 'Rejected by Institute R&D Coordinator' && (
+                                                <button
+                                                    className="btn btn-warning mt-2"
+                                                    onClick={() => handleEditClick(pat)} // Handle edit button click
+                                                >
+                                                    Edit
+                                                </button>
+                                            )}
                                         </div>
                                         </div>
                                     {visibleDetails === pat.patent_id && (
@@ -85,11 +98,13 @@ const PatentsPage = () => {
                                                 {pat.applicationNumber && <p><strong>Application Number:</strong> {pat.applicationNumber}</p>}
                                                 {pat.applicantName && <p><strong>Name of Applicant:</strong> {pat.applicantName}</p>}
                                                 {pat.department && <p><strong>Department:</strong> {pat.department}</p>}
-                                                {pat.filingDate && <p><strong>Date of Filing:</strong> {pat.filingDate}</p>}
                                                 {pat.numOfInventors && <p><strong>Number of Inventors:</strong> {pat.numOfInventors}</p>}
                                                 {pat.inventors && <p><strong>Name of Inventors:</strong> {pat.inventors}</p>}
-                                                {pat.dateOfPublished && <p><strong>Date of Published:</strong> {pat.dateOfPublished}</p>}
-                                                {pat.dateOfGranted && <p><strong>Date of Granted:</strong> {pat.dateOfGranted}</p>}
+                                                {pat.filingDate && <p><strong>Date of Filing:</strong> {pat.filingDate.split('T')[0]}</p>}
+                                                {pat.dateOfPublished && <p><strong>Date of Published:</strong> {pat.dateOfPublished.split('T')[0]}</p>}
+                                                {pat.dateOfGranted && <p><strong>Date of Granted:</strong> {pat.dateOfGranted.split('T')[0]}</p>}
+
+                                                {pat.status1 && <p><strong>status:</strong> {pat.status1}</p>}
                                                 {pat.proofOfPatent && (
                                                     <p>
                                                         <strong>Proof of Patent:</strong>&nbsp;
