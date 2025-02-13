@@ -27,10 +27,11 @@ const ExternalFunded = () => {
     amountApplied: "",
     amountReceived: "",
     amountSanctioned: "",
+    totalExpenditure: ""
   });
 
   const [errors, setErrors] = useState({});
-  const validateField = (name, value) => {
+  const validateField = (name, value, updatedFormData = formData) => {
     let error = "";
     switch (name) {
       case "financialYear":
@@ -64,6 +65,14 @@ const ExternalFunded = () => {
           error = `${name === "piName" ? "PI Name" : "PI Department"} should only contain letters.`;
         }
         break;
+        case "copiName":
+        case "copiDept":
+          if (!value) {
+            error = `${name === "copiName" ? "CoPI Name" : "CoPI Department"} is required.`;
+          } else if (!/^[a-zA-Z\s]+$/.test(value)) {
+            error = `${name === "copiName" ? "CoPI Name" : "CoPI Department"} should only contain letters.`;
+          }
+          break;
       case "piContact":
         if (!value) {
           error = "PI Contact is required.";
@@ -71,6 +80,13 @@ const ExternalFunded = () => {
           error = "Contact Number must be a valid 10-digit number.";
         }
         break;
+        case "copiContact":
+          if (!value) {
+            error = "CoPI Contact is required.";
+          } else if (!/^\d{10}$/.test(value)) {
+            error = "Contact Number must be a valid 10-digit number.";
+          }
+          break;
       case "piEmail":
         if (!value) {
           error = "PI Email is required.";
@@ -78,7 +94,13 @@ const ExternalFunded = () => {
           error = "Email must be valid.";
         }
         break;
-
+        case "copiEmail":
+        if (!value) {
+          error = "CoPI Email is required.";
+        } else if (!/\S+@\S+\.\S+/.test(value)) {
+          error = "Email must be valid.";
+        }
+        break;
       case "title":
       case "objectives":
       case "outcomes":
@@ -101,7 +123,7 @@ const ExternalFunded = () => {
         }
         break;
         case "amountApplied":
-          if (formData.status === "applied" && !value) {
+          if ((formData.status === "applied" || formData.status === "ongoing" || formData.status === "completed" ) && !value) {
             error = "Amount Applied is required when status is 'Applied'.";
           } else if (value && !/^\d+$/.test(value)) {
             error = "Amount Applied should contain only numbers.";
@@ -124,6 +146,14 @@ const ExternalFunded = () => {
             error = "Amount Received should contain only numbers.";
           }
           break;
+          case "totalExpenditure":
+          if (formData.status === "completed" && !value) {
+            error = "Total Expenditure is required when status is 'Completed'.";
+          } else if (value && !/^\d+$/.test(value)) {
+            error = "Total Expenditure should contain only numbers.";
+          }
+          break;
+
         
       default:
         break;
@@ -142,14 +172,17 @@ const ExternalFunded = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-
-    const fieldError = validateField(name, value);
+    const updatedFormData = { ...formData, [name]: value };
+  
+    setFormData(updatedFormData);
+  
+    const fieldError = validateField(name, value, updatedFormData);
     setErrors((prevErrors) => ({
       ...prevErrors,
       [name]: fieldError,
     }));
   };
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log("Submitting form...");
@@ -242,13 +275,13 @@ const ExternalFunded = () => {
   
 
   return (
-    <div className="container mt-5">
-      <h1 className="text-center mb-4">External Funded Projects</h1>
+    <div className="container mt-2">
+      <h2 className="text-center text-dark mb-4">External Funded Projects</h2>
       <form onSubmit={handleSubmit}>
         <div className="row">
           {/* General Information */}
           <div className="col-md-6 mb-3">
-            <label className="form-label">Financial Year</label>
+            <label className="form-label">Financial Year<span style={{ color: "red" }}>*</span></label>
             <input
               type="text"
               className="form-control"
@@ -259,7 +292,7 @@ const ExternalFunded = () => {
             {errors.financialYear && <div className="text-danger">{errors.financialYear}</div>}
           </div>
           <div className="col-md-6 mb-3">
-            <label className="form-label">Application Number</label>
+            <label className="form-label">Application Number<span style={{ color: "red" }}>*</span></label>
             <input
               type="text"
               className="form-control"
@@ -270,7 +303,7 @@ const ExternalFunded = () => {
             {errors.applicationNumber && <div className="text-danger">{errors.applicationNumber}</div>}
           </div>
           <div className="col-md-6 mb-3">
-            <label className="form-label">Agency</label>
+            <label className="form-label">Agency<span style={{ color: "red" }}>*</span></label>
             <input
               type="text"
               className="form-control"
@@ -281,7 +314,7 @@ const ExternalFunded = () => {
             {errors.agency && <div className="text-danger">{errors.agency}</div>}
           </div>
           <div className="col-md-6 mb-3">
-            <label className="form-label">Scheme</label>
+            <label className="form-label">Scheme<span style={{ color: "red" }}>*</span></label>
             <input
               type="text"
               className="form-control"
@@ -297,7 +330,7 @@ const ExternalFunded = () => {
         <div className="row">
           <div className="col-md-6">
             <div className="mb-3">
-              <label className="form-label">Name of the PI</label>
+              <label className="form-label">Name of the PI<span style={{ color: "red" }}>*</span></label>
               <input
                 type="text"
                 className="form-control"
@@ -308,7 +341,7 @@ const ExternalFunded = () => {
               {errors.piName && <div className="text-danger">{errors.piName}</div>}
             </div>
             <div className="mb-3">
-              <label className="form-label">Department of PI</label>
+              <label className="form-label">Department of PI<span style={{ color: "red" }}>*</span></label>
               <input
                 type="text"
                 className="form-control"
@@ -319,7 +352,7 @@ const ExternalFunded = () => {
               {errors.piDept && <div className="text-danger">{errors.piDept}</div>}
             </div>
             <div className="mb-3">
-              <label className="form-label">Contact Number of PI</label>
+              <label className="form-label">Contact Number of PI<span style={{ color: "red" }}>*</span></label>
               <input
                 type="text"
                 className="form-control"
@@ -330,7 +363,7 @@ const ExternalFunded = () => {
               {errors.piContact && <div className="text-danger">{errors.piContact}</div>}
             </div>
             <div className="mb-3">
-              <label className="form-label">Email id of PI</label>
+              <label className="form-label">Email id of PI<span style={{ color: "red" }}>*</span></label>
               <input
                 type="email"
                 className="form-control"
@@ -345,7 +378,7 @@ const ExternalFunded = () => {
           {/* Co-PI Credentials (Optional) */}
           <div className="col-md-6">
             <div className="mb-3">
-              <label className="form-label">Name of the Co-PI</label>
+              <label className="form-label">Name of the Co-PI<span style={{ color: "red" }}>*</span></label>
               <input
                 type="text"
                 className="form-control"
@@ -353,9 +386,10 @@ const ExternalFunded = () => {
                 value={formData.copiName}
                 onChange={handleChange}
               />
+              {errors.copiName && <div className="text-danger">{errors.copiName}</div>}
             </div>
             <div className="mb-3">
-              <label className="form-label">Department of Co-PI</label>
+              <label className="form-label">Department of Co-PI<span style={{ color: "red" }}>*</span></label>
               <input
                 type="text"
                 className="form-control"
@@ -363,9 +397,10 @@ const ExternalFunded = () => {
                 value={formData.copiDept}
                 onChange={handleChange}
               />
+              {errors.copiDept && <div className="text-danger">{errors.copiDept}</div>}
             </div>
             <div className="mb-3">
-              <label className="form-label">Contact Number of Co-PI</label>
+              <label className="form-label">Contact Number of Co-PI<span style={{ color: "red" }}>*</span></label>
               <input
                 type="text"
                 className="form-control"
@@ -376,7 +411,7 @@ const ExternalFunded = () => {
               {errors.copiContact && <div className="text-danger">{errors.copiContact}</div>}
             </div>
             <div className="mb-3">
-              <label className="form-label">Email id of Co-PI</label>
+              <label className="form-label">Email id of Co-PI<span style={{ color: "red" }}>*</span></label>
               <input
                 type="email"
                 className="form-control"
@@ -384,6 +419,7 @@ const ExternalFunded = () => {
                 value={formData.copiEmail}
                 onChange={handleChange}
               />
+              {errors.copiEmail && <div className="text-danger">{errors.copiEmail}</div>}
             </div>
           </div>
         </div>
@@ -391,7 +427,7 @@ const ExternalFunded = () => {
         {/* Project Details */}
         <div className="row">
           <div className="col-md-6 mb-3">
-            <label className="form-label">Duration of Project</label>
+            <label className="form-label">Duration of Project<span style={{ color: "red" }}>*</span></label>
             <input
               type="text"
               className="form-control"
@@ -402,7 +438,7 @@ const ExternalFunded = () => {
             {errors.duration && <div className="text-danger">{errors.duration}</div>}
           </div>
           <div className="col-md-6 mb-3">
-            <label className="form-label">Title of the Project</label>
+            <label className="form-label">Title of the Project<span style={{ color: "red" }}>*</span></label>
             <input
               type="text"
               className="form-control"
@@ -413,88 +449,97 @@ const ExternalFunded = () => {
             {errors.title && <div className="text-danger">{errors.title}</div>}
           </div>
           <div className="row">
-  {/* Status of the Project */}
-  <div className="col-md-6 mb-3">
-    <label className="form-label">Status of the Project</label>
-    <select
-      className="form-select"
-      name="status"
-      value={formData.status}
-      onChange={handleChange}
-    >
-      <option value="">Select the status</option>
-      <option value="ongoing">Ongoing</option>
-      <option value="completed">Completed</option>
-      <option value="applied">Applied</option>
-    </select>
-    {errors.status && <div className="text-danger">{errors.status}</div>}
-  </div>
+              {/* Status of the Project */}
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Status of the Project<span style={{ color: "red" }}>*</span></label>
+                <select
+                  className="form-select"
+                  name="status"
+                  value={formData.status}
+                  onChange={handleChange}
+                >
+                  <option value="">Select the status</option>
+                  <option value="ongoing">Ongoing</option>
+                  <option value="completed">Completed</option>
+                  <option value="applied">Applied</option>
+                </select>
+                {errors.status && <div className="text-danger">{errors.status}</div>}
+              </div>
 
-  {/* Start Date */}
-  <div className="col-md-6 mb-3">
-    <label className="form-label">Start Date</label>
-    <input
-      type="date"
-      className="form-control"
-      name="startDate"
-      value={formData.startDate}
-      onChange={handleChange}
-    />
-    {errors.startDate && <div className="text-danger">{errors.startDate}</div>}
-  </div>
-</div>
+              {/* Start Date */}
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Start Date<span style={{ color: "red" }}>*</span></label>
+                <input
+                  type="date"
+                  className="form-control"
+                  name="startDate"
+                  value={formData.startDate}
+                  onChange={handleChange}
+                />
+                {errors.startDate && <div className="text-danger">{errors.startDate}</div>}
+              </div>
+            </div>
 
-{/* Amount Applied */}
-{["applied", "ongoing", "completed"].includes(formData.status) && (
-  <div className="col-md-6 mb-3">
-    <label className="form-label">Amount Applied</label>
-    <input
-      type="text"
-      className="form-control"
-      name="amountApplied"
-      value={formData.amountApplied || ""}
-      onChange={handleChange}
-    />
-    {errors.amountApplied && <div className="text-danger">{errors.amountApplied}</div>}
-  </div>
-)}
+            {/* Amount Applied */}
+            {["applied", "ongoing", "completed"].includes(formData.status) && (
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Amount Applied<span style={{ color: "red" }}>*</span></label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="amountApplied"
+                  value={formData.amountApplied || ""}
+                  onChange={handleChange}
+                />
+                {errors.amountApplied && <div className="text-danger">{errors.amountApplied}</div>}
+              </div>
+            )}
 
-{/* Amount Received */}
-{["ongoing", "completed"].includes(formData.status) && (
-  <div className="col-md-6 mb-3">
-    <label className="form-label">Amount Received</label>
-    <input
-      type="text"
-      className="form-control"
-      name="amountReceived"
-      value={formData.amountReceived || ""}
-      onChange={handleChange}
-    />
-    {errors.amountReceived && <div className="text-danger">{errors.amountReceived}</div>}
-  </div>
-)}
+            {/* Amount Received */}
+            {["ongoing", "completed"].includes(formData.status) && (
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Amount Received<span style={{ color: "red" }}>*</span></label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="amountReceived"
+                  value={formData.amountReceived || ""}
+                  onChange={handleChange}
+                />
+                {errors.amountReceived && <div className="text-danger">{errors.amountReceived}</div>}
+              </div>
+            )}
 
-{/* Amount Sanctioned */}
-{formData.status === "completed" && (
-  <div className="col-md-6 mb-3">
-    <label className="form-label">Amount Sanctioned</label>
-    <input
-      type="text"
-      className="form-control"
-      name="amountSanctioned"
-      value={formData.amountSanctioned || ""}
-      onChange={handleChange}
-    />
-    {errors.amountSanctioned && <div className="text-danger">{errors.amountSanctioned}</div>}
-  </div>
-)}
-
-
-
-
-
+            {/* Amount Sanctioned */}
+            {formData.status === "completed" && (
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Amount Sanctioned<span style={{ color: "red" }}>*</span></label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="amountSanctioned"
+                  value={formData.amountSanctioned || ""}
+                  onChange={handleChange}
+                />
+                {errors.amountSanctioned && <div className="text-danger">{errors.amountSanctioned}</div>}
+              </div>
+              
+            )}
+            {formData.status === "completed" && (
+            <div className="col-md-6 mb-3">
+              <label className="form-label">Total Expenditure<span style={{ color: "red" }}>*</span></label>
+              <input
+                type="text"
+                className="form-control"
+                name="totalExpenditure"
+                value={formData.totalExpenditure}
+                onChange={handleChange}
+              />
+              {errors.totalExpenditure && <div className="text-danger">{errors.totalExpenditure}</div>}
+            </div>
+          )}
           <div className="col-md-6 mb-3">
-            <label className="form-label">Objectives of the Project</label>
+            <label className="form-label">Objectives of the Project<span style={{ color: "red" }}>*</span></label>
             <textarea
               className="form-control"
               name="objectives"
@@ -504,7 +549,7 @@ const ExternalFunded = () => {
             {errors.objectives && <div className="text-danger">{errors.objectives}</div>}
           </div>
           <div className="col-md-6 mb-3">
-            <label className="form-label">Outcomes of the Project</label>
+            <label className="form-label">Outcomes of the Project<span style={{ color: "red" }}>*</span></label>
             <textarea
               className="form-control"
               name="outcomes"

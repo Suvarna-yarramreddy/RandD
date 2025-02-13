@@ -1,19 +1,16 @@
 import React, { useState, useEffect } from 'react';
 
-const CorViewPublications = () => {
+const InstituteCorViewPublications = () => {
     const [publications, setPublications] = useState([]);
-    const [visiblePublicationId, setVisiblePublicationId] = useState(null); // Track which publication's details are visible
-    const [rejectionReason, setRejectionReason] = useState(''); // Store rejection reason
-    const [publicationToReject, setPublicationToReject] = useState(null); // Track which publication is being rejected
-    const coordinatorId = sessionStorage.getItem("coordinatorid");
+    const [visiblePublicationId, setVisiblePublicationId] = useState(null);
+    const [rejectionReason, setRejectionReason] = useState('');
+    const [publicationToReject, setPublicationToReject] = useState(null);
+
+
     useEffect(() => {
         const fetchPublications = async () => {
-            if (!coordinatorId) {
-                console.error('Coordinator ID is undefined');
-                return;
-            }
             try {
-                const response = await fetch(`http://localhost:5000/getAllPublications?coordinatorid=${coordinatorId}`);
+                const response = await fetch(`http://localhost:5000/getAllPublicationsOfInst`);
                 if (!response.ok) {
                     const errorText = await response.text();
                     console.error('Error response:', errorText);
@@ -26,22 +23,16 @@ const CorViewPublications = () => {
             }
         };
         fetchPublications();
-    }, [coordinatorId]);
+    }, []); // Remove instituteCoordinatorId dependency
     
 
-    // Toggle visibility of publication details
     const togglePublicationDetails = (publicationId) => {
-        if (visiblePublicationId === publicationId) {
-            setVisiblePublicationId(null); // Hide details if the same card is clicked
-        } else {
-            setVisiblePublicationId(publicationId); // Show clicked publication's details
-        }
+        setVisiblePublicationId(visiblePublicationId === publicationId ? null : publicationId);
     };
 
-    // Approve the publication and update the database
     const approvePublication = async (publicationId) => {
         try {
-            const response = await fetch(`http://localhost:5000/approvePublication/${publicationId}`, {
+            const response = await fetch(`http://localhost:5000/approvePublicationOfInst/${publicationId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -54,27 +45,25 @@ const CorViewPublications = () => {
                 throw new Error('Failed to approve publication');
             }
 
-            // Remove the publication from the list after approval
             setPublications(publications.filter(pub => pub.publication_id !== publicationId));
         } catch (error) {
             console.error('Error approving publication:', error);
         }
     };
 
-    // Reject the publication and update the database with the rejection reason
     const rejectPublication = async (publicationId) => {
-        if (!rejectionReason.trim()) { // Check if rejection reason is empty or just spaces
+        if (!rejectionReason.trim()) {
             alert('Please provide a reason for rejection');
             return;
         }
 
         try {
-            const response = await fetch(`http://localhost:5000/rejectPublication/${publicationId}`, {
+            const response = await fetch(`http://localhost:5000/rejectPublicationOfInst/${publicationId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ rejectionReason }),  // Pass rejectionReason directly
+                body: JSON.stringify({ rejectionReason }),
             });
 
             if (!response.ok) {
@@ -83,10 +72,7 @@ const CorViewPublications = () => {
                 throw new Error('Failed to reject publication');
             }
 
-            // If the rejection is successful, remove the rejected publication from the list
             setPublications(publications.filter(pub => pub.publication_id !== publicationId));
-
-            // Reset rejection reason and publication to reject state
             setRejectionReason('');
             setPublicationToReject(null);
         } catch (error) {
@@ -96,45 +82,41 @@ const CorViewPublications = () => {
 
     return (
         <div className="container my-4">
-            <h1 className="text-center text-dark mb-4">Publications Pending Approval</h1>
+            <h1 className="text-center text-dark mb-4">Institute Coordinator: Pending Publications</h1>
             {publications.length > 0 ? (
                 <div className="row">
                     {publications.map(pub => (
                         <div className="col-md-6 mb-4" key={pub.publication_id}>
                             <div className="card">
                                 <div className="card-body d-flex flex-column">
-                                <div 
-                                        className="d-flex justify-content-between align-items-center mb-3 flex-wrap d-md-flex"
-                                        style={{ minWidth: "0" }} // Prevents overflow
-                                    >
-                                        <h5 className="card-title" style={{ wordBreak: "break-word", flex: "1 1 auto" }}>
-                                            Cite As:&nbsp;
-                                            <a
-                                                href="#!"
-                                                onClick={() => togglePublicationDetails(pub.publication_id)}
-                                                className="text-primary"
+                                <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap d-md-flex"
+                                            style={{ minWidth: "0" }}>
+                                            <h5 className="card-title" style={{ wordBreak: "break-word", flex: "1 1 auto" }}>
+                                                Cite As:&nbsp;
+                                                <a
+                                                    href="#!"
+                                                    onClick={() => togglePublicationDetails(pub.publication_id)}
+                                                    className="text-primary"
+                                                >
+                                                    {pub.citeAs}
+                                                </a>
+                                            </h5>
+
+                                            <span 
+                                                className="badge bg-info text-dark mt-2 mt-md-0 text-wrap"
+                                                style={{ 
+                                                    whiteSpace: "normal",  // Allows text wrapping 
+                                                    wordBreak: "break-word", // Breaks long words properly
+                                                    maxWidth: "100%"  // Ensures it does not overflow
+                                                }}
                                             >
-                                                {pub.citeAs}
-                                            </a>
-                                        </h5>
-
-                                        <span 
-                                            className="badge bg-info text-dark mt-2 mt-md-0 text-wrap"
-                                            style={{ 
-                                                whiteSpace: "normal",  // Allows text wrapping
-                                                wordBreak: "break-word", // Breaks long words
-                                                maxWidth: "100%"  // Ensures it does not overflow
-                                            }}
-                                        >
-                                            {pub.status}
-                                        </span>
-                                    </div>
-
-                                    {/* Only show details for the clicked publication */}
+                                                {pub.status}
+                                            </span>
+                                        </div>
                                     {visiblePublicationId === pub.publication_id && (
                                         <div className="overflow-auto" style={{ maxHeight: '200px' }}>
                                             <div className="card-details">
-                                               {pub.natureOfPublication && <p><strong>Nature of Publication:</strong> {pub.natureOfPublication}</p>}
+                                            {pub.natureOfPublication && <p><strong>Nature of Publication:</strong> {pub.natureOfPublication}</p>}
                                                     {pub.typeOfPublication && <p><strong>Type of Publication:</strong> {pub.typeOfPublication}</p>}
                                                     {pub.titleOfPaper && <p><strong>Title of Paper:</strong> {pub.titleOfPaper}</p>}
                                                     {pub.nameOfJournalConference && <p><strong>Journal/Conference:</strong> {pub.nameOfJournalConference}</p>}
@@ -171,7 +153,7 @@ const CorViewPublications = () => {
                                                     {pub.volume && <p><strong>Volume:</strong> {pub.volume}</p>}
                                                     {pub.pageNo && <p><strong>Page Number:</strong> {pub.pageNo}</p>}
                                                     {pub.monthYear && <p><strong>Month & Year:</strong> {pub.monthYear}</p>}
-                                                    {pub.citeAs && <p><strong>Cite As:</strong> {pub.citeAs}</p>}
+    
                                                     {pub.proofOfPublication && (
                                                         <p><strong>Proof of Publication:</strong> 
                                                         <a href={`http://localhost:5000/${pub.proofOfPublication}`} target="_blank" rel="noopener noreferrer">
@@ -193,16 +175,14 @@ const CorViewPublications = () => {
                                         Approve
                                     </button>
 
-                                    {/* Reject button */}
                                     <button 
                                         className="btn btn-danger w-49 mb-3 ms-2" 
-                                        onClick={() => setPublicationToReject(pub.publication_id)} // Set the publication ID to reject
+                                        onClick={() => setPublicationToReject(pub.publication_id)}
                                     >
                                         Reject
                                     </button>
                                 </div>
 
-                                {/* If publication is being rejected, show a text field for rejection reason */}
                                 {publicationToReject === pub.publication_id && (
                                     <div className="mt-3">
                                         <textarea
@@ -214,7 +194,7 @@ const CorViewPublications = () => {
                                         />
                                         <button 
                                             className="btn btn-danger w-100 mt-2" 
-                                            onClick={() => rejectPublication(pub.publication_id)} // Handle rejection
+                                            onClick={() => rejectPublication(pub.publication_id)}
                                         >
                                             Submit Rejection
                                         </button>
@@ -231,4 +211,4 @@ const CorViewPublications = () => {
     );
 };
 
-export default CorViewPublications;
+export default InstituteCorViewPublications;

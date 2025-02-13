@@ -73,22 +73,21 @@ const PatentForm = () => {
   
   
   const validateInventors = (numOfInventors, inventors) => {
-    let newErrors = { ...errors }; // Use the current error state
+    let errors = {};
   
-    if (numOfInventors > 0) {
-      const allFilled = inventors.every((inv) => inv.trim() !== ""); // Check if all names are filled
-  
-      if (!allFilled) {
-        newErrors.inventors = "Please ensure that all inventor names are entered.";
-      } else {
-        delete newErrors.inventors; // Clear the error if all names are valid
-      }
-    } else {
-      delete newErrors.inventors; // Clear the error if there are no inventors
+    if (!numOfInventors || numOfInventors <= 0) {
+      errors.numOfInventors = "Number of inventors must be greater than 0";
     }
   
-    return newErrors; // Return the updated error object
+    inventors.forEach((inventor, index) => {
+      if (!inventor || inventor.trim() === "") {
+        errors[`inventors[${index}]`] = "Inventor name is required";
+      }
+    });
+  
+    return errors;
   };
+  
   
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -177,6 +176,15 @@ const validateField = (name, value, newErrors) => {
         delete newErrors.inventionTitle;
       }
       break;
+    
+      case "numOfInventors":
+        if (value <= 0) {
+          newErrors.numOfInventors = "Please enter a valid number of inventors (at least 1).";
+        } else {
+          delete newErrors.numOfInventors;
+        }
+        break;
+      
 
     case "status":
       if (!value) {
@@ -226,16 +234,15 @@ const validateField = (name, value, newErrors) => {
 const validateForm = () => {
   let newErrors = {};
 
-  // Validate other fields
   Object.keys(formData).forEach((key) => {
     if (key !== "inventors") {
       newErrors = validateField(key, formData[key], newErrors);
     }
   });
 
-  // Validate inventor fields explicitly
+  // Merge inventor errors correctly
   const inventorErrors = validateInventors(formData.numOfInventors, formData.inventors);
-  newErrors = { ...newErrors, ...inventorErrors }; // Merge inventor errors with others
+  newErrors = { ...newErrors, ...inventorErrors };
 
   return newErrors;
 };
@@ -244,63 +251,54 @@ const validateForm = () => {
 const handleSubmit = async (e) => {
   e.preventDefault();
 
-  // Validate all fields before submission
   let newErrors = validateForm();
+  setErrors(newErrors);
 
-  // Check if there are any errors
   if (Object.keys(newErrors).length > 0) {
-    // Set the errors to state
-    setErrors(newErrors);
+    alert("Please fill in all required fields before submitting.");
     console.log("Form validation failed:", newErrors);
-  } else {
-    // If no errors, submit the form
-    console.log("Form submitted successfully:", formData);
+    return; // Stop submission
+  }
 
-    try {
-      const dataToSend = new FormData();
-      dataToSend.append('faculty_id', faculty_id);
-      dataToSend.append('category', formData.category);
-      dataToSend.append('iprType', formData.iprType);
-      dataToSend.append('applicationNumber', formData.applicationNumber);
-      dataToSend.append('applicantName', formData.applicantName);
-      dataToSend.append('department', formData.department);
-      dataToSend.append('filingDate', formData.filingDate);
-      dataToSend.append('inventionTitle', formData.inventionTitle);
-      dataToSend.append('numOfInventors', formData.numOfInventors);
-      formData.inventors.forEach((inventor, index) => {
-        dataToSend.append(`inventors[${index}]`, inventor);
-      });
-      dataToSend.append('status', formData.status);
-      dataToSend.append('dateOfPublished', formData.dateOfPublished);
-      dataToSend.append('dateOfGranted', formData.dateOfGranted);
-      dataToSend.append('proofOfPatent', formData.proofOfPatent);
-
-      const response = await axios.post(
-        "http://localhost:5000/addPatent",
-        dataToSend,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
-      );
-
-      if (response.status === 200) {
-        console.log("Patent form submitted successfully", response.data);
-        navigate("/viewpatents");
+  console.log("Form submitted successfully:", formData);
+  try {
+    const dataToSend = new FormData();
+    dataToSend.append('faculty_id', faculty_id);
+    Object.keys(formData).forEach(key => {
+      if (key === 'inventors') {
+        formData.inventors.forEach((inventor, index) => {
+          dataToSend.append(`inventors[${index}]`, inventor);
+        });
       } else {
-        console.error("Patent form submission failed");
+        dataToSend.append(key, formData[key]);
       }
-    } catch (error) {
-      console.error("Error submitting patent form:", error);
+    });
+
+    const response = await axios.post("http://localhost:5000/addPatent", dataToSend, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+
+    if (response.status === 200) {
+      console.log("Patent form submitted successfully", response.data);
+      navigate("/viewpatents");
+    } else {
+      console.error("Patent form submission failed");
     }
+  } catch (error) {
+    console.error("Error submitting patent form:", error);
   }
 };
 
+
+
   return (
-    <div className="container mt-5">
-      <h2 className="text-center mb-4">Patent Form</h2>
+    <div className="container mt-2">
+      <h2 className="text-center text-dark mb-4">Patent Form</h2>
       <form onSubmit={handleSubmit}>
         {/* Category and IPR Type */}
         <div className="row">
           <div className="col-md-6 mb-3">
-            <label className="form-label">Category</label>
+            <label className="form-label">Category<span style={{ color: "red" }}>*</span></label>
             <select
               name="category"
               className="form-control"
@@ -315,7 +313,7 @@ const handleSubmit = async (e) => {
           </div>
 
           <div className="col-md-6 mb-3">
-            <label>Type of IPR</label>
+            <label className="form-label">Type of IPR<span style={{ color: "red" }}>*</span></label>
             <select
               name="iprType"
               className="form-control"
@@ -335,7 +333,7 @@ const handleSubmit = async (e) => {
         {/* Application Number and Applicant Name */}
         <div className="row">
           <div className="col-md-6 mb-3">
-            <label>Application Number</label>
+            <label>Application Number<span style={{ color: "red" }}>*</span></label>
             <input
               type="text"
               name="applicationNumber"
@@ -347,7 +345,7 @@ const handleSubmit = async (e) => {
           </div>
 
           <div className="col-md-6 mb-3">
-            <label>Applicant Name</label>
+            <label>Applicant Name<span style={{ color: "red" }}>*</span></label>
             <input
               type="text"
               name="applicantName"
@@ -362,7 +360,7 @@ const handleSubmit = async (e) => {
         {/* Department and Filing Date */}
         <div className="row">
           <div className="col-md-6 mb-3">
-            <label>Department</label>
+            <label>Department<span style={{ color: "red" }}>*</span></label>
             <input
               type="text"
               name="department"
@@ -374,7 +372,7 @@ const handleSubmit = async (e) => {
           </div>
 
           <div className="col-md-6 mb-3">
-            <label>Date of Filing</label>
+            <label>Date of Filing<span style={{ color: "red" }}>*</span></label>
             <input
               type="date"
               name="filingDate"
@@ -389,7 +387,7 @@ const handleSubmit = async (e) => {
         {/* Title of Invention and Number of Inventors */}
         <div className="row">
           <div className="col-md-6 mb-3">
-            <label>Title of Invention</label>
+            <label>Title of Invention<span style={{ color: "red" }}>*</span></label>
             <input
               type="text"
               name="inventionTitle"
@@ -401,7 +399,7 @@ const handleSubmit = async (e) => {
           </div>
 
           <div className="col-md-6 mb-3">
-            <label>Number of Inventors</label>
+            <label>Number of Inventors<span style={{ color: "red" }}>*</span></label>
             <select
               name="numOfInventors"
               className="form-control"
@@ -409,54 +407,58 @@ const handleSubmit = async (e) => {
               onChange={handleNumOfInventorsChange}
             >
               <option value={0}>Select Number</option>
-              {[...Array(10).keys()].map((i) => (
+              {Array.from({ length: 10 }, (_, i) => (
                 <option key={i + 1} value={i + 1}>
                   {i + 1}
                 </option>
               ))}
             </select>
-            {errors.inventors && <div className="text-danger">{errors.inventors}</div>}
+            {errors.numOfInventors && <div className="text-danger">{errors.numOfInventors}</div>}
           </div>
-        </div>
+          </div>
 
-        {/* Dynamically Render Inventor Fields */}
-{formData.numOfInventors > 0 &&
-  // Group inventors in pairs
-  [...Array(Math.ceil(formData.numOfInventors / 2))].map((_, rowIndex) => (
-    <div className="row" key={rowIndex}>
-      {/* Render the first inventor in the pair */}
-      <div className="col-md-6 mb-3">
-        <label>Inventor {rowIndex * 2 + 1}</label>
-        <input
-          type="text"
-          name={`inventor${rowIndex * 2 + 1}`}
-          className="form-control"
-          value={formData.inventors[rowIndex * 2] || ""}
-          onChange={(e) => handleInventorChange(rowIndex * 2, e)}
-        />
-      </div>
+          {/* Dynamically Render Inventor Fields */}
+          {formData.numOfInventors > 0 &&
+            Array.from({ length: Math.ceil(formData.numOfInventors / 2) }, (_, rowIndex) => (
+              <div className="row" key={rowIndex}>
+                {/* Render the first inventor in the pair */}
+                <div className="col-md-6 mb-3">
+                  <label>Inventor {rowIndex * 2 + 1} with affiliation<span style={{ color: "red" }}>*</span></label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={formData.inventors?.[rowIndex * 2] || ""}
+                    onChange={(e) => handleInventorChange(rowIndex * 2, e)}
+                  />
+                  {errors[`inventors[${rowIndex * 2}]`] && (
+                    <div className="text-danger">{errors[`inventors[${rowIndex * 2}]`]}</div>
+                  )}
+                </div>
 
-      {/* Render the second inventor in the pair, if it exists */}
-      {rowIndex * 2 + 1 < formData.numOfInventors && (
-        <div className="col-md-6 mb-3">
-          <label>Inventor {rowIndex * 2 + 2}</label>
-          <input
-            type="text"
-            name={`inventor${rowIndex * 2 + 2}`}
-            className="form-control"
-            value={formData.inventors[rowIndex * 2 + 1] || ""}
-            onChange={(e) => handleInventorChange(rowIndex * 2 + 1, e)}
-          />
-        </div>
-      )}
-    </div>
-  ))}
+                {/* Render the second inventor in the pair, if it exists */}
+                {rowIndex * 2 + 1 < formData.numOfInventors && (
+                  <div className="col-md-6 mb-3">
+                    <label>Inventor {rowIndex * 2 + 2} with affiliation<span style={{ color: "red" }}>*</span></label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={formData.inventors?.[rowIndex * 2 + 1] || ""}
+                      onChange={(e) => handleInventorChange(rowIndex * 2 + 1, e)}
+                    />
+                    {errors[`inventors[${rowIndex * 2 + 1}]`] && (
+                      <div className="text-danger">{errors[`inventors[${rowIndex * 2 + 1}]`]}</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+
 
 
         {/* Status and Conditional Date Fields */}
         <div className="row">
           <div className="col-md-6 mb-3">
-            <label>Status</label>
+            <label>Status<span style={{ color: "red" }}>*</span></label>
             <select
               name="status"
               className="form-control"
@@ -473,7 +475,7 @@ const handleSubmit = async (e) => {
 
           {formData.status === "published" && (
             <div className="col-md-6 mb-3">
-              <label>Date of Publication</label>
+              <label>Date of Publication<span style={{ color: "red" }}>*</span></label>
               <input
                 type="date"
                 name="dateOfPublished"
@@ -487,7 +489,7 @@ const handleSubmit = async (e) => {
 
           {formData.status === "granted" && (
             <div className="col-md-6 mb-3">
-              <label>Date of Granted</label>
+              <label>Date of Granted<span style={{ color: "red" }}>*</span></label>
               <input
                 type="date"
                 name="dateOfGranted"
@@ -501,7 +503,7 @@ const handleSubmit = async (e) => {
 
         {/* Proof of Patent Upload */}
         <div className="col-md-6 mb-3">
-            <label>Proof of Patent (PDF, PNG, JPEG)</label>
+            <label>Proof of Patent (PDF, PNG, JPEG)<span style={{ color: "red" }}>*</span></label>
             <input
               type="file"
               name="proofOfPatent"

@@ -94,16 +94,6 @@ const AddPublicationPage = () => {
           error = "Provide a valid Scopus link (e.g., https://www.scopus.com/...).";
         break;
 
-      case "volume":
-        if (!value || isNaN(value)) error = "Volume number must be a numeric value.";
-        else if (Number(value) <= 0) error = "Volume number must be greater than zero.";
-        break;
-
-      case "pageNo":
-        if (!value || isNaN(value)) error = "Page number must be a numeric value.";
-        else if (Number(value) <= 0) error = "Page number must be greater than zero.";
-        break;
-
       case "monthYear":
         if (!value) {
           error = "Please select the publication date.";
@@ -118,13 +108,19 @@ const AddPublicationPage = () => {
           }
         }
         break;
+        case "proofOfPublication":
+          if (!value) error = "Please upload proof of publication.";
+        break;
 
       default:
-        if (!value) error = `Please fill out the ${key.replace(/([A-Z])/g, " $1").toLowerCase()}.`;
+        if (!value && key !== "volume" && key !== "pageNo"){
+           error = `Please fill out the ${key.replace(/([A-Z])/g, " $1").toLowerCase()}.`;
+        }
     }
 
     return error;
   };
+
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -137,90 +133,100 @@ const AddPublicationPage = () => {
       [name]: fieldError,
     }));
   };
-  const handleFileChange = (event) => {
-    const file = event.target.files[0];
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setFormData({
+      ...formData,
+      proofOfPublication: file, // Changed to proofOfPublication
+    });
+
+    let newErrors = { ...errors };
+
     if (file) {
-      setFormData({
-        ...formData,
-        proofOfPublication: file,  // store the file in the formData state
-      });
+      if (!["application/pdf", "image/png", "image/jpeg"].includes(file.type)) {
+        newErrors.proofOfPublication = "Please upload a valid file (PDF, PNG, JPEG).";
+      } else {
+        delete newErrors.proofOfPublication;
+      }
+    } else {
+      newErrors.proofOfPublication = "Please upload a proof of publication (e.g., PDF, image file).";
     }
-  };
-  
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-  
-    let newErrors = {};
-    Object.keys(formData).forEach((key) => {
+
+    setErrors(newErrors);
+};
+
+const handleSubmit = async (e) => {
+  e.preventDefault(); // Prevent default form submission
+
+  let newErrors = {};
+
+  // Validate all form fields except file input
+  Object.keys(formData).forEach((key) => {
+    if (key !== "proofOfPublication") { // Ignore file input for now
       const fieldError = validateField(key, formData[key]);
       if (fieldError) {
         newErrors[key] = fieldError;
       }
-    });
-  
+    }
+  });
+
+  // Check proofOfPublication separately
+  if (!formData.proofOfPublication) {
+    newErrors.proofOfPublication = "Please upload a proof of publication (PDF, PNG, JPEG).";
+  }
+
+  // If any validation errors exist, set errors and stop submission
+  if (Object.keys(newErrors).length > 0) {
     setErrors(newErrors);
-  
-    const isValid = Object.values(newErrors).every((error) => error === "");
-    if (!isValid) {
-      alert("Fix the errors in the form.");
-      return;
-    }
-  
-    try {
-      const formDataToSend = new FormData();
-  
-      // Append all form data to FormData
-      Object.keys(formData).forEach((key) => {
-        if (key === "proofOfPublication" && formData[key]) {
-          formDataToSend.append(key, formData[key]); // Append the file if it's provided
-        } else {
-          formDataToSend.append(key, formData[key]);
-        }
-      });
-  
-      // Append faculty_id to the form data
-      formDataToSend.append("faculty_id", faculty_id);
-  
-      // Log form data for debugging
-      console.log("Sending form data:", formDataToSend);
-  
-      const response = await axios.post("http://localhost:5000/addPublication", formDataToSend, {
-        headers: {
-          "Content-Type": "multipart/form-data", // Ensure the correct header for file upload
-        },
-      });
-  
-      if (response.status === 200) {
-        navigate("/viewpublications");
-      }
-    } catch (error) {
-      if (error.response) {
-        if (error.response.status === 500) {
-          alert("Server error. Please try again later.");
-        } else {
-          alert(error.response.data.message || "An error occurred.");
-        }
-  
-        setErrors((prevErrors) => ({
-          ...prevErrors,
-          form: error.response.data.message || "An error occurred.",
-        }));
-      } else {
-        alert("Network error. Please check your connection.");
-      }
-    }
-  };
-  
+    return;
+  }
 
+  try {
+    const formDataToSend = new FormData();
 
+    // Append all form data to FormData
+    Object.keys(formData).forEach((key) => {
+      formDataToSend.append(key, formData[key]);
+    });
+
+    // Append faculty_id
+    formDataToSend.append("faculty_id", faculty_id);
+
+    const response = await axios.post("http://localhost:5000/addPublication", formDataToSend, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    if (response.status === 200) {
+      alert("Publication added successfully!");
+      navigate("/viewpublications");
+    }
+  } catch (error) {
+    if (error.response) {
+      setErrors((prevErrors) => ({
+        ...prevErrors,
+        form: error.response.data.message || "An error occurred.",
+      }));
+    } else {
+      setErrors((prevErrors) => ({
+        ...prevErrors,
+        form: "Network error. Please check your connection.",
+      }));
+    }
+  }
+};
+
+  
+  
   return (
-    <div className="container mt-5">
-      <h2 className="text-center mb-4">Add Publication Details</h2>
+    <div className="container mt-2">
+      <h2 className="text-center text-dark mb-4">Add Publication Details</h2>
       <form onSubmit={handleSubmit}>
         {/* Row 1 - Nature of Publication and Type of Publication */}
         <div className="row">
           <div className="col-md-6 mb-3">
-            <label className="form-label">Nature of Publication</label>
+            <label className="form-label">Nature of Publication<span style={{ color: "red" }}>*</span></label>
             <select
               name="natureOfPublication"
               className="form-select"
@@ -234,7 +240,7 @@ const AddPublicationPage = () => {
             {errors.natureOfPublication && <div className="text-danger">{errors.natureOfPublication}</div>}
           </div>
           <div className="col-md-6 mb-3">
-            <label className="form-label">Type of Publication</label>
+            <label className="form-label">Type of Publication<span style={{ color: "red" }}>*</span></label>
             <select
               name="typeOfPublication"
               className="form-select"
@@ -255,7 +261,7 @@ const AddPublicationPage = () => {
         {formData.typeOfPublication !== "Book Chapter" ? (
           <div className="row">
           <div className="col-md-6 mb-3">
-            <label className="form-label">Title of Paper</label>
+            <label className="form-label">Title of Paper<span style={{ color: "red" }}>*</span></label>
             <input
               type="text"
               name="titleOfPaper"
@@ -266,7 +272,7 @@ const AddPublicationPage = () => {
             {errors.titleOfPaper && <div className="text-danger">{errors.titleOfPaper}</div>}
           </div>
           <div className="col-md-6 mb-3">
-              <label className="form-label">Name of Journal/Conference</label>
+              <label className="form-label">Name of Journal/Conference<span style={{ color: "red" }}>*</span></label>
               <input
                 type="text"
                 name="nameOfJournalConference"
@@ -281,7 +287,7 @@ const AddPublicationPage = () => {
         ) : (
           <div className="row">
             <div className="col-md-6 mb-3">
-              <label className="form-label">Title of Chapter</label>
+              <label className="form-label">Title of Chapter<span style={{ color: "red" }}>*</span></label>
               <input
                 type="text"
                 name="titleofChapter"
@@ -292,7 +298,7 @@ const AddPublicationPage = () => {
               {errors.titleofChapter && <div className="text-danger">{errors.titleofChapter}</div>}
             </div>
             <div className="col-md-6 mb-3">
-              <label className="form-label">Name of Book</label>
+              <label className="form-label">Name of Book<span style={{ color: "red" }}>*</span></label>
               <input
                 type="text"
                 name="nameofbook"
@@ -308,7 +314,7 @@ const AddPublicationPage = () => {
             {/* Row 3 - Name of Publisher and ISSN/ISBN */}
             <div className="row">
               <div className="col-md-6 mb-3">
-                <label className="form-label">Name of Publisher</label>
+                <label className="form-label">Name of Publisher<span style={{ color: "red" }}>*</span></label>
                 <input
                   type="text"
                   name="nameOfPublisher"
@@ -319,7 +325,7 @@ const AddPublicationPage = () => {
                 {errors.nameOfPublisher && <div className="text-danger">{errors.nameOfPublisher}</div>}
               </div>
               <div className="col-md-6 mb-3">
-                <label className="form-label">ISSN/ISBN Number</label>
+                <label className="form-label">ISSN/ISBN Number<span style={{ color: "red" }}>*</span></label>
                 <input
                   type="text"
                   name="issnIsbn"
@@ -334,7 +340,7 @@ const AddPublicationPage = () => {
             {/* Row 4 - Author Status and First Author Name */}
             <div className="row">
               <div className="col-md-6 mb-3">
-                <label className="form-label">Are you First Author/Corresponding Author?</label>
+                <label className="form-label">Are you First Author/Corresponding Author?<span style={{ color: "red" }}>*</span></label>
                 <select
                   name="authorStatus"
                   className="form-select"
@@ -348,7 +354,7 @@ const AddPublicationPage = () => {
                 {errors.authorStatus && <div className="text-danger">{errors.authorStatus}</div>}
               </div>
               <div className="col-md-6 mb-3">
-                <label className="form-label">Name of the First Author</label>
+                <label className="form-label">Name of the First Author<span style={{ color: "red" }}>*</span></label>
                 <input
                   type="text"
                   name="firstAuthorName"
@@ -363,7 +369,7 @@ const AddPublicationPage = () => {
             {/* Row 5 - First Author Affiliation and Co-Authors */}
             <div className="row">
               <div className="col-md-6 mb-3">
-                <label className="form-label">Affiliation of First Author</label>
+                <label className="form-label">Affiliation of First Author<span style={{ color: "red" }}>*</span></label>
                 <input
                   type="text"
                   name="firstAuthorAffiliation"
@@ -374,7 +380,7 @@ const AddPublicationPage = () => {
                 {errors.firstAuthorAffiliation && <div className="text-danger">{errors.firstAuthorAffiliation}</div>}
               </div>
               <div className="col-md-6 mb-3">
-                <label className="form-label">Details of  all the Co-Authors with Affiliation</label>
+                <label className="form-label">Details of  all the Co-Authors with Affiliation<span style={{ color: "red" }}>*</span></label>
                 <input
                   type="text"
                   name="coAuthors"
@@ -389,18 +395,23 @@ const AddPublicationPage = () => {
             {/* Row 6 - Indexed and Quartile */}
             <div className="row">
               <div className="col-md-6 mb-3">
-                <label className="form-label">Indexed</label>
-                <input
-                  type="text"
+                <label className="form-label">Indexed<span style={{ color: "red" }}>*</span></label>
+                <select
                   name="indexed"
-                  className="form-control"
+                  className="form-select"
                   onChange={handleInputChange}
                   value={formData.indexed}
-                />
+                >
+                  <option value="">Select Indexed</option>
+                  <option value="Q1">Scopus</option>
+                  <option value="Q2">WOS-ESCI</option>
+                  <option value="Q3">WOS-SCI</option>
+                  <option value="Q4">WOS-SCIE</option>
+                </select>
                 {errors.indexed && <div className="text-danger">{errors.indexed}</div>}
               </div>
               <div className="col-md-6 mb-3">
-                <label className="form-label">Quartile</label>
+                <label className="form-label">Quartile<span style={{ color: "red" }}>*</span></label>
                 <select
                   name="quartile"
                   className="form-select"
@@ -412,6 +423,7 @@ const AddPublicationPage = () => {
                   <option value="Q2">Q2</option>
                   <option value="Q3">Q3</option>
                   <option value="Q4">Q4</option>
+                  <option value="N/A">N/A</option>
                 </select>
                 {errors.quartile && <div className="text-danger">{errors.quartile}</div>}
               </div>
@@ -420,7 +432,17 @@ const AddPublicationPage = () => {
             {/* Row 7 - Impact Factor and DOI */}
             <div className="row">
               <div className="col-md-6 mb-3">
-                <label className="form-label">Impact Factor</label>
+              <label className="form-label">
+                    Impact Factor{" "}
+                    <a 
+                      href="https://www.bioxbio.com/" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      style={{ marginLeft: "5px", textDecoration: "none", color: "blue" }}
+                    >
+                      (https://www.bioxbio.com/)
+                    </a><span style={{ color: "red" }}>*</span>
+                  </label>
                 <input
                   type="text"
                   name="impactFactor"
@@ -431,7 +453,7 @@ const AddPublicationPage = () => {
                 {errors.impactFactor && <div className="text-danger">{errors.impactFactor}</div>}
               </div>
               <div className="col-md-6 mb-3">
-                <label className="form-label">DOI</label>
+                <label className="form-label">DOI<span style={{ color: "red" }}>*</span></label>
                 <input
                   type="text"
                   name="doi"
@@ -446,7 +468,7 @@ const AddPublicationPage = () => {
             {/* Row 8 - Link of Paper and Scopus Link */}
             <div className="row">
               <div className="col-md-6 mb-3">
-                <label className="form-label">Link of the Paper</label>
+                <label className="form-label">Link of the Paper<span style={{ color: "red" }}>*</span></label>
                 <input
                   type="url"
                   name="linkOfPaper"
@@ -457,7 +479,7 @@ const AddPublicationPage = () => {
                 {errors.linkOfPaper && <div className="text-danger">{errors.linkOfPaper}</div>}
               </div>
               <div className="col-md-6 mb-3">
-                <label className="form-label">Scopus Paper Link</label>
+                <label className="form-label">Scopus Paper Link<span style={{ color: "red" }}>*</span></label>
                 <input
                   type="url"
                   name="scopusLink"
@@ -498,7 +520,7 @@ const AddPublicationPage = () => {
             {/* Row 10 - Month & Year and Cite As */}
             <div className="row">
               <div className="col-md-6 mb-3">
-                <label className="form-label">Year & Month</label>
+                <label className="form-label">Year & Month<span style={{ color: "red" }}>*</span></label>
                 <input
                   type="month"
                   name="monthYear"
@@ -509,7 +531,7 @@ const AddPublicationPage = () => {
                 {errors.monthYear && <div className="text-danger">{errors.monthYear}</div>}
               </div>
               <div className="col-md-6 mb-3">
-                <label className="form-label">Cite As</label>
+                <label className="form-label">Cite As<span style={{ color: "red" }}>*</span></label>
                 <input
                   type="text"
                   name="citeAs"
@@ -522,13 +544,12 @@ const AddPublicationPage = () => {
             </div>
             <div className="row">
                 <div className="col-md-6 mb-3">
-                  <label className="form-label">Proof of Publication (Upload File)</label>
+                  <label className="form-label">Proof of Publication (Upload File)<span style={{ color: "red" }}>*</span></label>
                   <input
                     type="file"
                     name="proofOfPublication"
                     className="form-control"
                     onChange={handleFileChange}
-                    required
                   />
                   {errors.proofOfPublication && <div className="text-danger">{errors.proofOfPublication}</div>}
                 </div>

@@ -50,8 +50,11 @@ const LoginCorPage = () => {
 
 
   return (
-    <div className="container mt-3" style={{ maxWidth: "500px" }}>
+    <div className="container mt-3" style={{ maxWidth: "600px" }}>
+      <div style={{ maxWidth: "600px" }}>
       <h1 className="text-center mb-4">Department Coordinator Login</h1>
+      </div>
+      <div className="container mt-3" style={{ maxWidth: "500px" }}>
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
           <label className="form-label">Department Coordinator ID:</label>
@@ -101,6 +104,7 @@ const LoginCorPage = () => {
           <div className="alert alert-danger mt-3">{errorMessage}</div>
         )}
       </form>
+      </div>
     </div>
   );
 };

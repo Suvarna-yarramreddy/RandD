@@ -347,11 +347,17 @@ app.get('/api/stats/:facultyId', async (req, res) => {
     });
 });
 
-// Get Publications Endpoint
 app.get("/getPublications/:faculty_id", (req, res) => {
     const faculty_id = req.params.faculty_id;
 
-    const query = "SELECT * FROM publications WHERE faculty_id = ?";
+    const query = `
+        SELECT * FROM publications 
+        WHERE faculty_id = ? 
+        AND (status = 'Approved by Institute R&D Coordinator' 
+        OR status = 'Rejected by Institute R&D Coordinator' 
+        OR status = 'Rejected by Department R&D Coordinator')
+    `;
+
     app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve uploaded files
 
     db.query(query, [faculty_id], (err, results) => {
@@ -361,19 +367,20 @@ app.get("/getPublications/:faculty_id", (req, res) => {
         }
 
         if (results.length === 0) {
-            console.log("No publications found for this faculty ID.");
             return res.status(404).json({ message: "No publications found" });
         }
 
-        // Correct file path format for client-side access
+        // Ensure correct file path format for client-side access
         results.forEach(pub => {
             if (pub.proofOfPublication) {
                 pub.proofOfPublication = `${pub.proofOfPublication.replace(/\\/g, '/')}`;
             }
         });
+
         res.json(results);
     });
 });
+
 
 // Update Publication Endpoint
 app.put('/update-publication/:id', upload.single('proofOfPublication'), (req, res) => {
@@ -553,7 +560,6 @@ app.get('/getPatents/:faculty_id', (req, res) => {
         }
 
         if (!results || results.length === 0) {
-            console.log("No patents found for faculty_id:", faculty_id);  // Log if no results
             return res.status(404).send('No patents found for this faculty.');
         }
 
@@ -661,40 +667,57 @@ app.put('/update-patent/:id', upload.single('proofOfPatent'), (req, res) => {
 });
 
 app.post("/addSeedMoney", upload.array("proof", 5), (req, res) => {
-    const {
-        faculty_id,
-        financialYear,
-        facultyName,
-        department,
-        numStudents,
-        projectTitle,
-        amountSanctioned,
-        amountReceived,
-        objectives,
-        outcomes,
-        students // Expecting a JSON array [{ "registration": "123", "name": "John" }]
-    } = req.body;
+    try {
+        const {
+            faculty_id,
+            financialYear,
+            facultyName,
+            department,
+            numStudents,
+            projectTitle,
+            amountSanctioned,
+            objectives,
+            outcomes,
+            students // Should be a JSON string or an array from frontend
+        } = req.body;
 
-    let proofUrls = req.files.map(file => `uploads/seedmoney/${file.filename}`);
+        let proofUrls = req.files.map(file => `uploads/seedmoney/${file.filename}`);
 
-    const query = `INSERT INTO SeedMoney (faculty_id, financialYear, facultyName, department, numStudents, 
-        projectTitle, amountSanctioned, amountReceived, objectives, outcomes, students, proof)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        // Ensure amountReceived is valid
+        const amountReceived = req.body.amountReceived && req.body.amountReceived.trim() !== ''
+            ? req.body.amountReceived
+            : null;
 
-    db.query(query, [
-        faculty_id, financialYear, facultyName, department, numStudents,
-        projectTitle, amountSanctioned, amountReceived, objectives, outcomes,
-        JSON.stringify(students), JSON.stringify(proofUrls)
-    ], (err, result) => {
-        if (err) {
-            console.error("Error inserting SeedMoney:", err);
-            return res.status(500).send("Error while inserting SeedMoney");
+        // Ensure students is a valid JSON string
+        let parsedStudents;
+        try {
+            parsedStudents = typeof students === "string" ? JSON.parse(students) : students;
+        } catch (error) {
+            console.error("Invalid students JSON:", students);
+            return res.status(400).json({ error: "Invalid students format" });
         }
-        res.status(200).json({ message: "SeedMoney added successfully", seedMoneyId: result.insertId });
-    });
+
+        const query = `INSERT INTO SeedMoney (faculty_id, financialYear, facultyName, department, numStudents, 
+            projectTitle, amountSanctioned, amountReceived, objectives, outcomes, students, proof)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+        db.query(query, [
+            faculty_id, financialYear, facultyName, department, numStudents,
+            projectTitle, amountSanctioned, amountReceived, objectives, outcomes,
+            JSON.stringify(parsedStudents), JSON.stringify(proofUrls)
+        ], (err, result) => {
+            if (err) {
+                console.error("Error inserting SeedMoney:", err);
+                return res.status(500).json({ error: "Error while inserting SeedMoney" });
+            }
+            res.status(200).json({ message: "SeedMoney added successfully", seedMoneyId: result.insertId });
+        });
+    } catch (error) {
+        console.error("Unexpected error:", error);
+        res.status(500).json({ error: "Unexpected error occurred" });
+    }
 });
 
-// Route to Get SeedMoney Records by Faculty ID
 app.get("/getSeedMoney/:faculty_id", (req, res) => {
     const { faculty_id } = req.params;
 
@@ -702,35 +725,23 @@ app.get("/getSeedMoney/:faculty_id", (req, res) => {
     db.query(query, [faculty_id], (err, results) => {
         if (err) {
             console.error("Error fetching SeedMoney records:", err);
-            return res.status(500).send("Error fetching SeedMoney records.");
+            return res.status(500).json({ error: "Error fetching SeedMoney records" });
         }
         if (results.length === 0) {
-            return res.status(404).send("No SeedMoney records found.");
+            return res.status(404).json({ message: "No SeedMoney records found." });
         }
 
-        // Safely parse JSON fields before sending the response
+        // ✅ Send data as plain text (comma-separated)
         results.forEach(record => {
-            try {
-                record.students = JSON.parse(record.students || "[]");
-            } catch (e) {
-                console.error("Invalid JSON in students:", record.students);
-                record.students = [];
-            }
-
-            try {
-                // Ensure `proof` is always a JSON array
-                record.proof = Array.isArray(record.proof)
-                    ? record.proof
-                    : JSON.parse(record.proof || "[]");
-            } catch (e) {
-                console.error("Invalid JSON in proof:", record.proof);
-                record.proof = [];
-            }
+            record.students = record.students || "No students";
+            record.proof = record.proof || "No proof available";
         });
 
         res.json(results);
     });
 });
+
+
 
 // Route to Update SeedMoney
 app.put("/updateSeedMoney/:id", upload.array("proof", 5), (req, res) => {
@@ -794,26 +805,27 @@ app.post('/addFundedProject', (req, res) => {
     const {
         faculty_id, financialYear, applicationNumber, agency, scheme, piName, piDept, piContact, piEmail,
         copiName, copiDept, copiContact, copiEmail, duration, title, status, startDate, objectives, outcomes,
-        amountApplied, amountReceived, amountSanctioned, proof
+        amountApplied, amountReceived, amountSanctioned, proof, totalExpenditure
     } = req.body;
 
     // Convert empty decimal values to NULL
     const sanitizedAmountSanctioned = amountSanctioned === '' ? null : amountSanctioned;
     const sanitizedAmountApplied = amountApplied === '' ? null : amountApplied;
     const sanitizedAmountReceived = amountReceived === '' ? null : amountReceived;
+    const sanitizedTotalExpenditure = totalExpenditure === '' ? null : totalExpenditure;
 
     const sql = `
         INSERT INTO fundedprojects 
         (faculty_id, financialYear, applicationNumber, agency, scheme, piName, piDept, piContact, piEmail, 
          copiName, copiDept, copiContact, copiEmail, duration, title, status, startDate, objectives, outcomes, 
-         amountApplied, amountReceived, amountSanctioned, proof) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         amountApplied, amountReceived, amountSanctioned, proof, totalExpenditure) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     db.query(sql, [
         faculty_id, financialYear, applicationNumber, agency, scheme, piName, piDept, piContact, piEmail,
         copiName, copiDept, copiContact, copiEmail, duration, title, status, startDate, objectives, outcomes,
-        sanitizedAmountApplied, sanitizedAmountReceived, sanitizedAmountSanctioned, proof
+        sanitizedAmountApplied, sanitizedAmountReceived, sanitizedAmountSanctioned, proof, sanitizedTotalExpenditure
     ], (err, result) => {
         if (err) {
             console.error("Error inserting project:", err);
@@ -823,21 +835,20 @@ app.post('/addFundedProject', (req, res) => {
     });
 });
 
+
 app.get('/getFundedProjects/:id', (req, res) => {
     const { id } = req.params;
     const sql = 'SELECT * FROM fundedprojects WHERE faculty_id = ?';
 
     db.query(sql, [id], (err, result) => {
         if (err) {
-            console.error('Error fetching project:', err);
+            console.error('Error fetching projects:', err);
             return res.status(500).json({ message: 'Database error' });
         }
-        if (result.length === 0) {
-            return res.status(404).json({ message: 'Project not found' });
-        }
-        res.status(200).json(result[0]);
+        res.status(200).json(result); // Return all projects
     });
 });
+
 
 app.post('/coordinatorlogin', (req, res) => {
     const { coordinatorid, password1, department } = req.body;
@@ -1073,6 +1084,87 @@ app.put('/rejectPatent/:patentId', (req, res) => {
         }
 
         res.status(200).json({ message: 'Patent rejected successfully' });
+    });
+});
+
+app.post("/institute_coordinator_login", (req, res) => {
+    const { coordinatorid, password } = req.body;
+  
+    const sql = "SELECT * FROM InstituteCoordinators WHERE coordinatorid = ?";
+    db.query(sql, [coordinatorid], async (err, result) => {
+      if (err) return res.status(500).json({ success: false, error: err });
+  
+      if (result.length === 0) {
+        return res.status(401).json({ success: false, message: "Invalid credentials" });
+      }
+  
+      if (!password) {
+        return res.status(401).json({ success: false, message: "Invalid credentials" });
+      }
+  
+      res.json({ success: true, coordinatorid: result[0].coordinatorid });
+    });
+  });
+  
+  app.get("/getAllPublicationsOfInst", (req, res) => {
+    const sql = `
+        SELECT * FROM publications 
+        WHERE status = 'Approved by Department R&D Coordinator'
+    `;
+
+    db.query(sql, (err, results) => {
+        if (err) {
+            return res.status(500).json({ success: false, error: err });
+        }
+        res.json(results);
+    });
+});
+
+app.put("/approvePublicationOfInst/:publicationId", (req, res) => {
+    const { publicationId } = req.params;
+
+    if (!publicationId) {
+        return res.status(400).json({ success: false, message: "Publication ID is required" });
+    }
+
+    const sql = `
+        UPDATE publications 
+        SET status = 'Approved by Institute R&D Coordinator' 
+        WHERE publication_id = ?
+    `;
+
+    db.query(sql, [publicationId], (err, result) => {
+        if (err) {
+            return res.status(500).json({ success: false, error: err });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ success: false, message: "Publication not found" });
+        }
+        res.json({ success: true, message: "Publication approved successfully" });
+    });
+});
+app.put("/rejectPublicationOfInst/:publicationId", (req, res) => {
+    const { publicationId } = req.params;
+    const { rejectionReason } = req.body;
+
+    if (!publicationId || !rejectionReason.trim()) {
+        return res.status(400).json({ success: false, message: "Publication ID and rejection reason are required" });
+    }
+
+    const sql = `
+        UPDATE publications 
+        SET status = 'Rejected by Institute R&D Coordinator', rejection_reason = ? 
+        WHERE publication_id = ?
+    `;
+
+    db.query(sql, [rejectionReason, publicationId], (err, result) => {
+        if (err) {
+            return res.status(500).json({ success: false, error: err });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ success: false, message: "Publication not found" });
+        }
+        res.json({ success: true, message: "Publication rejected successfully" });
     });
 });
 

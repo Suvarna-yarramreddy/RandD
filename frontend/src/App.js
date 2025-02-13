@@ -21,6 +21,10 @@ import CorViewPatents from './pages/deptcorviewpatents';
 import Editpub from './pages/editpublications';
 import Editpat from './pages/editpatents';
 import Viewexternal from './pages/viewexternal';
+import LoginInstCoordinator from './pages/instcorlogin';
+import InstCoSidebar from './pages/instcorsidebar';
+import InstituteCorViewPublications from './pages/instviewpub';
+import ConsultancyForm from './pages/addconsultant';
 const App = () => {
   return (
     <Router>
@@ -45,6 +49,10 @@ const App = () => {
           <Route path="/corviewpatents" element={<CorViewPatents/>}/>
           <Route path="/editpublications" element={<Editpub/>}/>
           <Route path="/editpatents" element={<Editpat/>}/>
+          <Route path="/instcorlogin" element={<LoginInstCoordinator/>}/>
+          <Route path="/instcorsidebar" element={<InstCoSidebar/>}/>
+          <Route path="/instcorviewpublications" element={<InstituteCorViewPublications/>}/>
+          <Route path="/addconsultant" element={<ConsultancyForm/>}/>
         </Routes>
       </Layout>
     </Router>

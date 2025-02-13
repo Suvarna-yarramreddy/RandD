@@ -30,8 +30,8 @@ const FundedProjectsPage = () => {
         fetchFundedProjects();
     }, [faculty_id]);
 
-    const handleToggleDetails = (projectId) => {
-        setVisibleDetails(visibleDetails === projectId ? null : projectId);
+    const handleToggleDetails = (id) => {
+        setVisibleDetails(visibleDetails === id ? null : id);
     };
 
     const handleEditClick = (project) => {
@@ -47,12 +47,12 @@ const FundedProjectsPage = () => {
     }
 
     return (
-        <div className="container my-4">
-            <h1 className="text-center text-dark mb-4">Externally Funded Projects</h1>
+        <div className="container mt-2">
+            <h2 className="text-center text-dark mb-4">Externally Funded Projects</h2>
             {projects.length > 0 ? (
                 <div className="row">
                     {projects.map((proj) => (
-                        <div className="col-md-6 mb-4" key={proj.projectId}>
+                        <div className="col-md-6 mb-4" key={proj.id}>
                             <div className="card">
                                 <div className="card-body d-flex flex-column">
                                     <div className="d-flex justify-content-between align-items-center mb-3">
@@ -60,8 +60,8 @@ const FundedProjectsPage = () => {
                                             Project Title:&nbsp;
                                             <a
                                                 href="#!"
-                                                onClick={() => handleToggleDetails(proj.projectId)}
-                                                aria-expanded={visibleDetails === proj.projectId}
+                                                onClick={() => handleToggleDetails(proj.id)}
+                                                aria-expanded={visibleDetails === proj.id}
                                                 className="text-primary"
                                             >
                                                 {proj.title}
@@ -87,7 +87,7 @@ const FundedProjectsPage = () => {
                                             )}
                                         </div>
                                     </div>
-                                    {visibleDetails === proj.projectId && (
+                                    {visibleDetails === proj.id && (
                                         <div className="card-details overflow-auto" style={{ maxHeight: '250px' }}>
                                             {proj.financialYear && <p><strong>Financial Year:</strong> {proj.financialYear}</p>}
                                             {proj.applicationNumber && <p><strong>Application Number:</strong> {proj.applicationNumber}</p>}
@@ -108,6 +108,7 @@ const FundedProjectsPage = () => {
                                             {proj.amountApplied && <p><strong>Amount Applied:</strong> ₹{proj.amountApplied}</p>}
                                             {proj.amountReceived && <p><strong>Amount Received:</strong> ₹{proj.amountReceived}</p>}
                                             {proj.amountSanctioned && <p><strong>Amount Sanctioned:</strong> ₹{proj.amountSanctioned}</p>}
+                                            {proj.totalExpenditure && <p><strong>Total Expenditure Of The Project:</strong> ₹{proj.totalExpenditure}</p>}
                                         </div>
                                     )}
                                 </div>

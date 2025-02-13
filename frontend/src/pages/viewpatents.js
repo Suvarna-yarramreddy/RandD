@@ -4,8 +4,6 @@ import { useNavigate } from 'react-router-dom';
 const PatentsPage = () => {
     const [patents, setPatents] = useState([]);
     const [visibleDetails, setVisibleDetails] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
 
     const faculty_id = sessionStorage.getItem("faculty_id");
     const navigate = useNavigate();
@@ -21,9 +19,7 @@ const PatentsPage = () => {
                 const data = await response.json();
                 setPatents(data);
             } catch (err) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
+                console.error('Error fetching patents:', err);
             }
         };
 
@@ -38,17 +34,10 @@ const PatentsPage = () => {
         navigate('/editpatents', { state: { patents: patent } });
     };
 
-    if (loading) {
-        return <div className="text-center">Loading...</div>;
-    }
-
-    if (error) {
-        return <div className="text-center text-danger">{error}</div>;
-    }
 
     return (
-        <div className="container my-4">
-            <h1 className="text-center text-dark mb-4">Your Patents</h1>
+        <div className="container mt-2">
+            <h2 className="text-center text-dark mb-4">Your Patents</h2>
             {patents.length > 0 ? (
                 <div className="row">
                     {patents.map((pat) => (
@@ -117,7 +106,7 @@ const PatentsPage = () => {
                     ))}
                 </div>
             ) : (
-                <p className="text-center text-muted">No patents available for approval.</p>
+                <p className="text-center text-muted">No patents available.</p>
             )}
         </div>
     );

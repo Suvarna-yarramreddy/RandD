@@ -34,36 +34,31 @@ const Navbar = ({ setIsLoggedIn, setRole }) => {
 
   return (
     <nav className="navbar navbar-expand-lg text-white" 
-     style={{ background: "linear-gradient(135deg, #2C3E50, #3498DB)", height: "100px" }}>
+    style={{ background: "linear-gradient(135deg, #2C3E50, #3498DB)" }}>
   <div className="container-fluid d-flex align-items-center" style={{ height: "100%" }}>
-    
+
     {/* Logo (Left - Fully Filling Navbar Height) */}
-    <div className="navbar-brand d-flex align-items-center" style={{ height: "100%" }}>
+    <div className="navbar-brand d-flex align-items-center">
       <img 
         src={logo} 
         alt="SVECW Logo" 
-        style={{ 
-          height: "100%",  // Fills navbar height
-          width: "auto",   // Maintains aspect ratio
-          objectFit: "cover",
-          display: "block"
-        }} 
+        style={{ width: "65px", objectFit: "cover", display: "block" }} 
       />
     </div>
 
     {/* Centered College Name */}
     <div className="mx-auto text-center" style={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
-      <h2 className="fw-bold mb-0">Shri Vishnu Engineering College for Women</h2>
+      <h2 className="fw-bold mb-0 text-white">Shri Vishnu Engineering College for Women</h2>
     </div>
 
-    {/* Navbar Toggle (For Mobile View) */}
-    <button className="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+    {/* Navbar Toggle */}
+    <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
       <span className="navbar-toggler-icon"></span>
     </button>
 
-    {/* Navbar Links (Right) */}
-    <div className="collapse navbar-collapse justify-content-end" id="navbarNav">
-      <ul className="navbar-nav">
+    {/* Navbar Links */}
+    <div className="collapse navbar-collapse" id="navbarNav">
+      <ul className="navbar-nav ms-auto">
         <li className="nav-item">
           <button className="nav-link text-white" onClick={handleHomeClick}>Home</button>
         </li>
@@ -76,6 +71,7 @@ const Navbar = ({ setIsLoggedIn, setRole }) => {
               <ul className="dropdown-menu dropdown-menu-end">
                 <li><button className="dropdown-item" onClick={() => navigate("/login")}>Login as Faculty</button></li>
                 <li><button className="dropdown-item" onClick={() => navigate("/coordinatorlogin")}>Login as Department R&D Coordinator</button></li>
+                <li><button className="dropdown-item" onClick={() => navigate("/instcorlogin")}>Login as Institute R&D Coordinator</button></li>
               </ul>
             </li>
             <li className="nav-item">
@@ -91,8 +87,6 @@ const Navbar = ({ setIsLoggedIn, setRole }) => {
     </div>
   </div>
 </nav>
-
-
 
   )};
 export default Navbar;

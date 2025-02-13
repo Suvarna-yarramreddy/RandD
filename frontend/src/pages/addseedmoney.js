@@ -8,7 +8,7 @@ function SeedMoneyPage() {
     financialYear: '',
     facultyName: '',
     department: '',
-    numStudents: 0,
+    numStudents: '',
     projectTitle: '',
     amountSanctioned: '',
     amountReceived: '',
@@ -34,7 +34,7 @@ function SeedMoneyPage() {
   };
   
   const handleNumStudentsChange = (e) => {
-    const value = parseInt(e.target.value) || 0;
+    const value = parseInt(e.target.value) ;
     const students = value > 0 ? Array.from({ length: value }, () => ({ registration: "", name: "" })) : [];
     setFormData((prevData) => ({ ...prevData, numStudents: value, students }));
     validateField("numStudents", value); // real-time validation
@@ -56,31 +56,33 @@ function SeedMoneyPage() {
   let isValid = true;
   const newErrors = {}; // Initialize an empty error object
 
-  // Validate each field in formData
+  // Validate required fields
   Object.keys(formData).forEach((key) => {
     const value = formData[key];
-    console.log(`Validating ${key}: ${value}`);  // Log each key and value
 
-    // Skip optional fields like numStudents and proof
-    if (key === "numStudents" || key === "proof") return;
-
-    // Check if the field is empty or invalid
-    if (!value || (Array.isArray(value) && value.length === 0) || (typeof value === 'string' && value.trim() === '')) {
-      newErrors[key] = `${key} is required.`;  // Populate error message
-      isValid = false; // Mark the form as invalid
+    if (!value && key !== "proof" && key!== "amountReceived") {
+      newErrors[key] = `${key.replace(/([A-Z])/g, " $1")} is required.`; // Auto-generate error message
+      isValid = false;
     }
   });
+  if (!formData.proof || formData.proof.length === 0) {
+    newErrors.proof = "Proof document is required.";
+    isValid = false;
+  }
+  
+  // Validate numStudents
+  if (!formData.numStudents || formData.numStudents <= 0) {
+    newErrors.numStudents = "Number of students must be greater than 0.";
+    isValid = false;
+  }
 
-  // Validate student registration and name only if numStudents > 0
+  // Validate student fields if numStudents > 0
   if (formData.numStudents > 0) {
     formData.students.forEach((student, index) => {
-      console.log(`Validating student ${index}:, student`);  // Log student details
-
       if (!student.registration.trim()) {
         newErrors[`student-registration-${index}`] = `Student ${index + 1}: Registration is required.`;
         isValid = false;
       }
-
       if (!student.name.trim()) {
         newErrors[`student-name-${index}`] = `Student ${index + 1}: Name is required.`;
         isValid = false;
@@ -88,10 +90,8 @@ function SeedMoneyPage() {
     });
   }
 
-  // Log the errors object for debugging
-  console.log('Validation errors:', newErrors);
+  setErrors(newErrors); // ✅ Update error state properly
 
-  setErrors(newErrors);  // Update the error state
   return isValid;
 };
 
@@ -120,9 +120,13 @@ const validateField = (name, value) => {
       else delete newErrors.department;
       break;
 
-    case "numStudents":
-      // Skip validation for numStudents since it's not required
-      break;
+      case "numStudents":
+        if (!value || value <= 0) 
+          newErrors.numStudents = "Number of students involved is required and must be greater than 0.";
+        else 
+          delete newErrors.numStudents;
+        break;
+      
 
     case "projectTitle":
       if (!value.trim()) newErrors.projectTitle = "Project Title is required.";
@@ -137,14 +141,6 @@ const validateField = (name, value) => {
       else delete newErrors.amountSanctioned;
       break;
 
-    case "amountReceived":
-      if (!value || isNaN(value))
-        newErrors.amountReceived = "Amount Received must be a valid number.";
-      else if (parseFloat(value) > parseFloat(formData.amountSanctioned))
-        newErrors.amountReceived = "Amount Received cannot exceed Amount Sanctioned.";
-      else delete newErrors.amountReceived;
-      break;
-
     case "objectives":
       if (!value.trim()) newErrors.objectives = "Objectives are required.";
       else delete newErrors.objectives;
@@ -154,19 +150,26 @@ const validateField = (name, value) => {
       if (!value.trim()) newErrors.outcomes = "Outcomes are required.";
       else delete newErrors.outcomes;
       break;
-
-    case "proof":
-      // Skip validation for proof since it's not required
-      break;
-
+      case "proof":
+        if (!value || value.length === 0) {
+          newErrors.proof = "Proof document is required.";
+        } else {
+          delete newErrors.proof;
+        }
+        break;
+      
     default:
       // Validate student fields if numStudents > 0
       if (formData.numStudents > 0) {
-        if (name.startsWith("student-registration")) {
-          const index = parseInt(name.split("-")[2], 10);
-          if (!value.trim()) newErrors[`student-registration-${index}`] = `Student ${index + 1}: Registration is required.`;
-          else delete newErrors[`student-registration-${index}`];
+        if (name.startsWith("student-registration-")) {
+          const index = Number(name.split("-")[2]); // Ensure a number
+          if (!value.trim()) {
+            newErrors[`student-registration-${index}`] = `Student ${index + 1}: Registration is required.`;
+          } else {
+            delete newErrors[`student-registration-${index}`];
+          }
         }
+        
 
         if (name.startsWith("student-name")) {
           const index = parseInt(name.split("-")[2], 10);
@@ -178,83 +181,69 @@ const validateField = (name, value) => {
       }
       break;
   }
-
   setErrors(newErrors); // Update the error state
+  console.log("Validation Errors:", newErrors);
   return newErrors;
-};
 
+};
 const handleSubmit = async (e) => {
   e.preventDefault();
 
   if (validateForm()) {
     // Form is valid, prepare the data to be sent
     const formDataToSend = new FormData();
-    formDataToSend.append('faculty_id', faculty_id); // Add faculty_id from context
+    formDataToSend.append('faculty_id', faculty_id);
     formDataToSend.append('financialYear', formData.financialYear);
     formDataToSend.append('facultyName', formData.facultyName);
     formDataToSend.append('department', formData.department);
     formDataToSend.append('numStudents', formData.numStudents);
     formDataToSend.append('projectTitle', formData.projectTitle);
     formDataToSend.append('amountSanctioned', formData.amountSanctioned);
-    formDataToSend.append('amountReceived', formData.amountReceived);
+    formDataToSend.append('amountReceived', formData.amountReceived); 
     formDataToSend.append('objectives', formData.objectives);
     formDataToSend.append('outcomes', formData.outcomes);
 
+    // ✅ Append proof files correctly
     if (formData.proof && Array.isArray(formData.proof)) {
       formData.proof.forEach(file => {
-          if (file instanceof File) {
-              formDataToSend.append('proof', file);  // Append each valid file
-          }
+        if (file instanceof File) {
+          formDataToSend.append('proof', file);
+        }
       });
-  } else {
-      formDataToSend.append('proof', null); // Send null if no files are selected
-  }
-    // Handle students dynamically (if there are multiple students)
-    formData.students.forEach((student, index) => {
-      formDataToSend.append(`students[${index}][registration]`, student.registration);
-      formDataToSend.append(`students[${index}][name]`, student.name);
-    });
+    }
+
+    // ✅ Fix: Append students as a JSON string instead of separate keys
+    formDataToSend.append('students', JSON.stringify(formData.students));
 
     try {
-      // Send form data to backend (server)
       const response = await fetch('http://localhost:5000/addSeedMoney', {
         method: 'POST',
-        body: formDataToSend,  // Send FormData instead of JSON
+        body: formDataToSend,
       });
 
-      // Check the response content type
+      // ✅ Handle JSON response safely
       const contentType = response.headers.get('Content-Type');
-      let data;
-
-      // If the response is JSON, parse it
-      if (contentType && contentType.includes('application/json')) {
-        data = await response.json();  // Parse response as JSON
-      } else {
-        // Handle plain text or other response types
-        data = await response.text();  // Read the response as plain text
-      }
+      const data = contentType && contentType.includes('application/json')
+        ? await response.json()
+        : await response.text();
 
       if (response.ok) {
+        // ✅ Reset form state after successful submission
+        setFormData({
+          financialYear: '',
+          facultyName: '',
+          department: '',
+          numStudents: '',
+          projectTitle: '',
+          amountSanctioned: '',
+          amountReceived: '',
+          objectives: '',
+          outcomes: '',
+          proof: [],
+          students: [{ registration: '', name: '' }]
+        });
 
-        if (data.message === 'Form submitted successfully!') {
-          // Reset the form after successful submission
-          setFormData({
-            financialYear: '',
-            facultyName: '',
-            department: '',
-            numStudents: 0,
-            projectTitle: '',
-            amountSanctioned: '',
-            amountReceived: '',
-            objectives: '',
-            outcomes: '',
-            proof: null,
-            students: [{ registration: '', name: '' }]
-          });
-        }
-        if (response.status === 200) {
-          navigate("/viewseedmoney");
-        }
+        navigate("/viewseedmoney");
       } else {
         console.error('Error:', data);
         alert('Failed to submit the form: ' + (data.message || data));
@@ -264,23 +253,28 @@ const handleSubmit = async (e) => {
       alert('Failed to submit the form due to network issues');
     }
   } else {
-    // If form is invalid, scroll to the first error field
+    
+    alert('Fill all the required fields');
+
+    // ✅ Scroll to the first error field
     const firstErrorField = Object.keys(errors)[0];
-    const errorField = document.querySelector([`name=${firstErrorField}`]);
-    if (errorField) {
-      errorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (firstErrorField) {
+      const errorField = document.querySelector(`[name="${firstErrorField}"]`);
+      if (errorField) {
+        errorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     }
   }
 };
 
 
   return (
-    <div className="container mt-5">
-      <h1 className="text-center mb-4">Seed Money Application</h1>
-      <form onSubmit={handleSubmit}  method="POST" enctype="multipart/form-data">
+    <div className="container mt-2">
+      <h2 className="text-center text-dark mb-4">Seed Money Application</h2>
+      <form onSubmit={handleSubmit}  method="POST" encType="multipart/form-data">
         <div className="row">
           <div className="col-md-6 mb-3">
-            <label className="form-label">Financial Year</label>
+            <label className="form-label" >Financial Year<span style={{ color: "red" }}>*</span></label>
             <select
             className="form-select"
             name="financialYear"
@@ -296,7 +290,7 @@ const handleSubmit = async (e) => {
               {errors.financialYear && <div className="text-danger">{errors.financialYear}</div>}
             </div>
           <div className="col-md-6 mb-3">
-            <label className="form-label">Faculty Name</label>
+            <label className="form-label">Faculty Name<span style={{ color: "red" }}>*</span></label>
             <input
               type="text"
               className="form-control"
@@ -309,7 +303,7 @@ const handleSubmit = async (e) => {
           </div>
           <div className="row">
           <div className="col-md-6 mb-3">
-            <label className="form-label">Department</label>
+            <label className="form-label">Department<span style={{ color: "red" }}>*</span></label>
             <input
               type="text"
               className="form-control"
@@ -322,22 +316,23 @@ const handleSubmit = async (e) => {
         {/* Student Details */}
         
           <div className="col-md-6 mb-3">
-            <label className="form-label">Number of Students Involved</label>
+            <label className="form-label">Number of Students Involved<span style={{ color: "red" }}>*</span></label>
             <input
               type="number"
               className="form-control"
               name="numStudents"
               value={formData.numStudents}
               onChange={handleNumStudentsChange}
-              min="0"
+              min=""
             />
+            {errors.numStudents && <span style={{ color: "red" }}>{errors.numStudents}</span>}
           </div>
         </div>
 
         {formData.numStudents > 0 && formData.students.map((student, index) => (
           <div className="row" key={index}>
             <div className="col-md-6 mb-3">
-              <label className="form-label">Registration Number (Student {index + 1})</label>
+              <label className="form-label">Registration Number (Student {index + 1})<span style={{ color: "red" }}>*</span></label>
               <input
                 type="text"
                 className="form-control"
@@ -345,9 +340,10 @@ const handleSubmit = async (e) => {
                 value={student.registration}
                 onChange={(e) => handleStudentChange(index, 'registration', e.target.value)}
               />
+               {errors[`student-registration-${index}`] && <small className="text-danger">{errors[`student-registration-${index}`]}</small>}
             </div>
             <div className="col-md-6 mb-3">
-              <label className="form-label">Name (Student {index + 1})</label>
+              <label className="form-label">Name (Student {index + 1})<span style={{ color: "red" }}>*</span></label>
               <input
                 type="text"
                 className="form-control"
@@ -355,6 +351,7 @@ const handleSubmit = async (e) => {
                 value={student.name}
                 onChange={(e) => handleStudentChange(index, 'name', e.target.value)}
               />
+              {errors[`student-name-${index}`] && <small className="text-danger">{errors[`student-name-${index}`]}</small>}
             </div>
           </div>
         ))}
@@ -362,7 +359,7 @@ const handleSubmit = async (e) => {
         {/* Project Details */}
         <div className="row">
           <div className="col-md-6 mb-3">
-            <label className="form-label">Title of the Project</label>
+            <label className="form-label">Title of the Project<span style={{ color: "red" }}>*</span></label>
             <input
               type="text"
               className="form-control"
@@ -373,7 +370,7 @@ const handleSubmit = async (e) => {
             {errors.projectTitle && <div className="text-danger">{errors.projectTitle}</div>}
           </div>
           <div className="col-md-6 mb-3">
-            <label className="form-label">Amount Sanctioned (in Rupees)</label>
+            <label className="form-label">Amount Sanctioned (in Rupees)<span style={{ color: "red" }}>*</span></label>
             <input
               type="text"
               className="form-control"
@@ -394,11 +391,10 @@ const handleSubmit = async (e) => {
               value={formData.amountReceived}
               onChange={handleChange}
             />
-            {errors.amountReceived && <div className="text-danger">{errors.amountReceived}</div>}
           </div>
           
           <div className="col-md-6 mb-3">
-            <label className="form-label">Objectives of the Project</label>
+            <label className="form-label">Objectives of the Project<span style={{ color: "red" }}>*</span></label>
             <textarea
               className="form-control"
               name="objectives"
@@ -411,7 +407,7 @@ const handleSubmit = async (e) => {
           </div>
           <div className='row'>
           <div className="col-md-6 mb-3">
-            <label className="form-label">Outcomes of the Project</label>
+            <label className="form-label">Outcomes of the Project<span style={{ color: "red" }}>*</span></label>
             <textarea
               className="form-control"
               name="outcomes"
@@ -423,7 +419,7 @@ const handleSubmit = async (e) => {
           </div>
         
           <div className="col-md-6 mb-3">
-  <label className="form-label">Upload Proof</label>
+  <label className="form-label">Upload Proof<span style={{ color: "red" }}>*</span></label>
   <div className="custom-file">
     <input
       type="file"
@@ -432,6 +428,7 @@ const handleSubmit = async (e) => {
       multiple
       onChange={handleFileChange}
     />
+     {errors.proof && <div className="text-danger">{errors.proof}</div>}
   </div>
   {formData.proof.length > 0 && (
     <div className="mt-3">

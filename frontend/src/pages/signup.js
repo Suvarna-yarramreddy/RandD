@@ -94,131 +94,135 @@ const FacultySignupPage = () => {
   };
   const validateField = (fieldName, value) => {
     let error = "";
-  
+
     const validateEmail = (email) =>
-      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(email);
-   const validatePhoneNumber = (phoneNumber) =>
-  /^[7-9][0-9]{9}$/.test(phoneNumber.trim());
-  
+        /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(email);
+
+    const validatePhoneNumber = (phoneNumber) =>
+        /^[7-9][0-9]{9}$/.test(phoneNumber.trim());
+
     const validateName = (name) => /^[a-zA-Z\s]+$/.test(name);
-    const validateDate = (date) => /^\d{4}-\d{2}-\d{2}$/.test(date); // YYYY-MM-DD format
+
+    const validateDate = (date) =>
+        /^\d{4}-\d{2}-\d{2}$/.test(date); // YYYY-MM-DD format
+
     const validateUrl = (url) =>
-      /^(https?:\/\/)?([a-z0-9-]+\.)+[a-z0-9]{2,4}(\/.*)?$/.test(url);
+        /^(https?:\/\/)?([a-z0-9-]+\.)+[a-z0-9]{2,4}(\/.*)?$/.test(url);
+
     const validateYear = (year) =>
-      /^\d{4}$/.test(year) && parseInt(year) >= 1900 && parseInt(year) <= new Date().getFullYear();
+        /^\d{4}$/.test(year) && parseInt(year) >= 1900 && parseInt(year) <= new Date().getFullYear();
+
     const validateOrcid = (orcid) =>
-      /^\d{4}-\d{4}-\d{4}-\d{4}$/.test(orcid);
-    const validateCourseNetworkId = (courseNetworkId) => 
-      /^[a-zA-Z0-9-]+$/.test(courseNetworkId);    
+        /^\d{4}-\d{4}-\d{4}-\d{4}$/.test(orcid);
+
+    const validateCourseNetworkId = (courseNetworkId) =>
+        /^[a-zA-Z0-9-]+$/.test(courseNetworkId);
+
     const validateScopusId = (id) =>
-      /^[a-zA-Z0-9]+$/.test(id); // Scopus ID format: alphanumeric
+        /^[a-zA-Z0-9]+$/.test(id); // Scopus ID format: alphanumeric
+
     const validateGoogleScholarId = (id) =>
-      /^[a-zA-Z0-9-]+$/.test(id);
-  
+        /^[a-zA-Z0-9-]+$/.test(id);
+
     switch (fieldName) {
-      case "institute_name":
-        error = value ? "" : "Institute name is required.";
-        break;
-      case "faculty_id":
-        error = /^[a-zA-Z0-9]+$/.test(value)
-          ? ""
-          : "Faculty ID must be alphanumeric.";
-        break;
-      case "faculty_name":
-        error = validateName(value)
-          ? ""
-          : "Faculty name must only contain alphabets and spaces.";
-        break;
+        case "institute_name":
+        case "faculty_id":
+        case "faculty_name":
         case "research_domain":
         case "major_specialization":
         case "research_skills":
-      case "department":
-      case "designation":
-      case "qualification":
-      case "guide_department":
-        error = value ? "" : `${fieldName.replace("_", " ")} is required.`;
-        break;
-      case "ratified":
-      error = value ? "" : `${fieldName.replace("_", " ")} must be Y or N.`;
-      break;
-      case "phd_status":
-        error = ["On Going", "Completed", "Not Pursuing"].includes(value)
-          ? ""
-          : "Invalid PhD status.";
-        break;
-      case "phd_registration_date":
-        error = value && !validateDate(value)
-          ? "Date must be in the format YYYY-MM-DD."
-          : "";
-        break;
+        case "department":
+        case "designation":
+        case "qualification":
+        case "guide_department":
         case "date_of_joining_svecw":
-          error = !value || !validateDate(value)
-            ? "Date of joining is required."
-            : "";
-          break;
-      case "phd_completed_year":
-        error = value && !validateYear(value)
-          ? "Invalid year."
-          : "";
-        break;
-      case "guide_name":
-        error = !value || !validateName(value)
-          ? "Guide name must only contain alphabets and spaces."
-          : "";
-        break;
-      case "guide_phone_number":
-      case "phone_number":
-        error = !value || !validatePhoneNumber(value)
-          ? "Phone number must start with 7, 8, or 9 and contain 10 digits."
-          : "";
-        break;
-      case "guide_mail_id":
-      case "official_mail_id":
-        error = !value || !validateEmail(value)
-          ? "Invalid email address."
-          : "";
-        break;
-      case "faculty_profile_weblink":
-      case "vidwan_portal":
-        error = !value || !validateUrl(value)
-          ? "Invalid URL format."
-          : "";
-        break;
-      case "orcid":
-        error = !value || !validateOrcid(value)
-          ? "Invalid ORCID format."
-          : "";
-        break;
+            error = value ? "" : `${fieldName.replace("_", " ")} is required.`;
+            break;
+
+        case "ratified":
+            error = ["Y", "N"].includes(value) ? "" : "Ratified must be Y or N.";
+            break;
+
+        case "phd_status":
+            error = ["On Going", "Completed", "Not Pursuing"].includes(value)
+                ? ""
+                : "Invalid PhD status.";
+            break;
+
+        case "phd_registration_date":
+            if (value && !validateDate(value))
+                error = "Date must be in the format YYYY-MM-DD.";
+            break;
+
+        case "phd_completed_year":
+            if (value && !validateYear(value))
+                error = "Invalid year.";
+            break;
+
+        case "guide_name":
+            error = !value || !validateName(value)
+                ? "Guide name must only contain alphabets and spaces."
+                : "";
+            break;
+
+        case "guide_phone_number":
+        case "phone_number":
+            error = !value || !validatePhoneNumber(value)
+                ? "Phone number must start with 7, 8, or 9 and contain 10 digits."
+                : "";
+            break;
+
+        case "guide_mail_id":
+        case "official_mail_id":
+            error = !value || !validateEmail(value)
+                ? "Invalid email address."
+                : "";
+            break;
+
+        case "faculty_profile_weblink":
+        case "vidwan_portal":
+            if (value && !validateUrl(value))
+                error = "Invalid URL format.";
+            break;
+
+        case "orcid":
+            if (value && !validateOrcid(value))
+                error = "Invalid ORCID format.";
+            break;
+
         case "course_network_id":
-      error = !value || !validateCourseNetworkId(value)
-        ? "Invalid Course Network ID. It should be alphanumeric with optional dashes."
-        : "";
-      break;
-    case "scopus_id":
-      error = !value || !validateScopusId(value)
-        ? "Invalid Scopus ID. It should be alphanumeric."
-        : "";
-      break;
-    case "google_scholar_id":
-      error = !value || !validateGoogleScholarId(value)
-        ? "Invalid Google Scholar ID. It should be alphanumeric with optional dashes."
-        : "";
-      break;
-      case "total_experience":
-      case "previous_teaching_experience":
-      case "industry_experience":
-        error = (!value || value < 0)? `${fieldName.replace("_", " ")} must be a positive number.`: "";
-        break;
-      case "password1":
-        error =
-          value.length >= 6 ? "" : "Password must be at least 6 characters long.";
-        break;
-      default:
-        break;
+            if (value && !validateCourseNetworkId(value))
+                error = "Invalid Course Network ID. It should be alphanumeric with optional dashes.";
+            break;
+
+        case "scopus_id":
+            if (value && !validateScopusId(value))
+                error = "Invalid Scopus ID. It should be alphanumeric.";
+            break;
+
+        case "google_scholar_id":
+            if (value && !validateGoogleScholarId(value))
+                error = "Invalid Google Scholar ID. It should be alphanumeric with optional dashes.";
+            break;
+
+        case "total_experience":
+        case "previous_teaching_experience":
+        case "industry_experience":
+            if (isNaN(value) || value < 0)
+                error = `${fieldName.replace("_", " ")} must be a positive number.`;
+            break;
+
+        case "password1":
+            error = value.length >= 6 ? "" : "Password must be at least 6 characters long.";
+            break;
+
+        default:
+            break;
     }
-  
+
     return error;
-  };
+};
+
   
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -227,16 +231,27 @@ const FacultySignupPage = () => {
     let formIsValid = true;
     const newErrors = {};
 
-    // Validate all form fields
-    Object.keys(formData).forEach((fieldName) => {
-        const error = validateField(fieldName, formData[fieldName]);
-        if (error) {
-            formIsValid = false;
-            newErrors[fieldName] = error;
-        } else {
-            newErrors[fieldName] = ''; // Reset error if field is valid
-        }
-    });
+        const requiredFields = [
+          "institute_name", "faculty_id", "faculty_name", "department", "designation",
+          "research_domain", "major_specialization", "research_skills", "qualification",
+          "phd_status", "phd_registration_date", "phd_university", "phd_completed_year",
+          "guide_name", "guide_phone_number", "guide_mail_id", "guide_department",
+          "date_of_joining_svecw", "experience_in_svecw", "previous_teaching_experience",
+          "total_experience", "industry_experience", "ratified", "official_mail_id",
+          "phone_number", "course_network_id", "faculty_profile_weblink", "vidwan_portal",
+          "password1"
+      ];
+
+      // Validate only required fields
+      requiredFields.forEach((fieldName) => {
+          const error = validateField(fieldName, formData[fieldName]);
+          if (error) {
+              formIsValid = false;
+              newErrors[fieldName] = error;
+          } else {
+              newErrors[fieldName] = ''; // Reset error if field is valid
+          }
+      });
 
     setErrors(newErrors);
 
@@ -287,13 +302,13 @@ const FacultySignupPage = () => {
   
   
   return (
-    <div className="container mt-5">
-      <h1 className="text-center mb-4">Faculty Signup</h1>
+    <div className="container mt-4">
+      <h1 className="text-center mb-5">Faculty Signup</h1>
     <form onSubmit={handleSubmit} >
       {/* Row 1 */}
       <div className="row">
       <div className="col-md-4">
-          <label htmlFor="faculty_id" className="form-label">Faculty ID</label>
+          <label htmlFor="faculty_id" className="form-label">Faculty ID<span style={{ color: "red" }}>*</span></label>
           <input
             type="text"
             id="faculty_id"
@@ -305,7 +320,7 @@ const FacultySignupPage = () => {
           {errors.faculty_id && <div className="text-danger">{errors.faculty_id}</div>}
         </div>
         <div className="col-md-4">
-          <label htmlFor="institute_name" className="form-label">Institute Name</label>
+          <label htmlFor="institute_name" className="form-label">Institute Name<span style={{ color: "red" }}>*</span></label>
           <input
             type="text"
             id="institute_name"
@@ -318,7 +333,7 @@ const FacultySignupPage = () => {
         </div>
         
         <div className="col-md-4">
-          <label htmlFor="faculty_name" className="form-label">Faculty Name</label>
+          <label htmlFor="faculty_name" className="form-label">Faculty Name<span style={{ color: "red" }}>*</span></label>
           <input
             type="text"
             id="faculty_name"
@@ -334,7 +349,7 @@ const FacultySignupPage = () => {
       {/* Row 2 */}
       <div className="row mt-3">
       <div className="col-md-4">
-              <label htmlFor="department" className="form-label">Department</label>
+              <label htmlFor="department" className="form-label">Department<span style={{ color: "red" }}>*</span></label>
               <select
                 id="department"
                 name="department"
@@ -357,7 +372,7 @@ const FacultySignupPage = () => {
             </div>
 
         <div className="col-md-4">
-          <label htmlFor="designation" className="form-label">Designation</label>
+          <label htmlFor="designation" className="form-label">Designation<span style={{ color: "red" }}>*</span></label>
           <select
                 className="form-control"
                 name="designation"
@@ -376,7 +391,7 @@ const FacultySignupPage = () => {
           {errors.designation && <div className="text-danger">{errors.designation}</div>}
         </div>
         <div className="col-md-4">
-          <label htmlFor="research_domain" className="form-label">Research Domain</label>
+          <label htmlFor="research_domain" className="form-label">Research Domain<span style={{ color: "red" }}>*</span></label>
           <input
             type="text"
             id="research_domain"
@@ -391,7 +406,7 @@ const FacultySignupPage = () => {
 
       <div className="row mt-3">
             <div className="col-md-4">
-              <label className="form-label">Major Specialization:</label>
+              <label className="form-label">Major Specialization<span style={{ color: "red" }}>*</span></label>
               <input
                 type="text"
                 className="form-control"
@@ -402,7 +417,7 @@ const FacultySignupPage = () => {
               />{errors.major_specialization && <div className="text-danger">{errors.major_specialization}</div>}
             </div>
             <div className="col-md-4">
-              <label className="form-label">Research Skills:</label>
+              <label className="form-label">Research Skills<span style={{ color: "red" }}>*</span></label>
               <input
                 type="text"
                 className="form-control"
@@ -413,7 +428,7 @@ const FacultySignupPage = () => {
               />{errors.research_skills && <div className="text-danger">{errors.research_skills}</div>}
             </div>
             <div className="col-md-4">
-              <label className="form-label">Qualification:</label>
+              <label className="form-label">Qualification<span style={{ color: "red" }}>*</span></label>
               <select
                 className="form-control"
                 name="qualification"
@@ -433,7 +448,7 @@ const FacultySignupPage = () => {
           </div>
           <div className="row mt-3">
             <div className="col-md-4">
-                <label className="form-label">PhD Status:</label>
+                <label className="form-label">PhD Status<span style={{ color: "red" }}>*</span></label>
                 <select
                   className="form-control"
                   name="phd_status"
@@ -451,7 +466,7 @@ const FacultySignupPage = () => {
               {formData.phd_status === "On Going" && (
                 <div className="row mb-3">
                   <div className="col-md-6">
-                    <label className="form-label">Date of Ph.D. Registered:</label>
+                    <label className="form-label">Date of Ph.D. Registered<span style={{ color: "red" }}>*</span></label>
                     <input
                       type="date"
                       className="form-control"
@@ -462,7 +477,7 @@ const FacultySignupPage = () => {
                     {errors.phd_registration_date && <div className="text-danger">{errors.phd_registration_date}</div>}
                   </div>
                   <div className="col-md-6">
-                    <label className="form-label">University of Ph.D.:</label>
+                    <label className="form-label">University of Ph.D.<span style={{ color: "red" }}>*</span></label>
                     <input
                       type="text"
                       className="form-control"
@@ -477,7 +492,7 @@ const FacultySignupPage = () => {
                  {formData.phd_status === "Completed" && (
                 <div className="row mt-3">
                   <div className="col-md-4">
-                    <label className="form-label">Date of Ph.D. Registered:</label>
+                    <label className="form-label">Date of Ph.D. Registered<span style={{ color: "red" }}>*</span></label>
                     <input
                       type="date"
                       className="form-control"
@@ -488,7 +503,7 @@ const FacultySignupPage = () => {
                     {errors.phd_registration_date && <div className="text-danger">{errors.phd_registration_date}</div>}
                   </div>
                   <div className="col-md-4">
-                    <label className="form-label">University of Ph.D.:</label>
+                    <label className="form-label">University of Ph.D.<span style={{ color: "red" }}>*</span></label>
                     <input
                       type="text"
                       className="form-control"
@@ -498,7 +513,7 @@ const FacultySignupPage = () => {
                     />{errors.phd_university && <div className="text-danger">{errors.phd_university}</div>}
                   </div>
                   <div className="col-md-4">
-                    <label className="form-label">Year of Ph.D. Completion:</label>
+                    <label className="form-label">Year of Ph.D. Completion<span style={{ color: "red" }}>*</span></label>
                     <input
                       type="text"
                       className="form-control"
@@ -510,7 +525,7 @@ const FacultySignupPage = () => {
                 </div>
               )}  
               <div className="col-md-4">
-              <label className="form-label">Guide Name:</label>
+              <label className="form-label">Guide Name<span style={{ color: "red" }}>*</span></label>
               <input
                 type="text"
                 className="form-control"
@@ -522,7 +537,7 @@ const FacultySignupPage = () => {
               {errors.guide_name && <div className="text-danger">{errors.guide_name}</div>}
             </div>
             <div className="col-md-4">
-              <label className="form-label">Guide Phone Number:</label>
+              <label className="form-label">Guide Phone Number<span style={{ color: "red" }}>*</span></label>
               <input
                 type=""
                 className="form-control"
@@ -536,7 +551,7 @@ const FacultySignupPage = () => {
         </div>
         <div className="row mt-3">
               <div className="col-md-4">
-                  <label className="form-label">Guide Mail Id:</label>
+                  <label className="form-label">Guide Mail Id<span style={{ color: "red" }}>*</span></label>
                   <input
                     type="text"
                     className="form-control"
@@ -548,7 +563,7 @@ const FacultySignupPage = () => {
                   {errors.guide_mail_id && <div className="text-danger">{errors.guide_mail_id}</div>}
                 </div>
               <div className="col-md-4">
-                <label className="form-label">Guide Department:</label>
+                <label className="form-label">Guide Department<span style={{ color: "red" }}>*</span></label>
                 <input
                   type="text"
                   className="form-control"
@@ -560,7 +575,7 @@ const FacultySignupPage = () => {
                 {errors.guide_department && <div className="text-danger">{errors.guide_department}</div>}
               </div>
               <div className="col-md-4">
-                <label className="form-label">Date of Joining SVECW:</label>
+                <label className="form-label">Date of Joining SVECW<span style={{ color: "red" }}>*</span></label>
                 <input
                   type="date"
                   className="form-control"
@@ -574,7 +589,7 @@ const FacultySignupPage = () => {
         </div>
         <div className="row mt-3">
             <div className="col-md-4">
-                <label className="form-label">Experience in SVECW (Years):</label>
+                <label className="form-label">Experience in SVECW (Years)<span style={{ color: "red" }}>*</span></label>
                 <input
                   type="text"
                   className="form-control"
@@ -584,7 +599,7 @@ const FacultySignupPage = () => {
                 />
               </div>
               <div className="col-md-4">
-              <label className="form-label">Previous Teaching Experience (Years):</label>
+              <label className="form-label">Previous Teaching Experience (Years)<span style={{ color: "red" }}>*</span></label>
               <input
                 type="number"
                 className="form-control "
@@ -596,7 +611,7 @@ const FacultySignupPage = () => {
               {errors.previous_teaching_experience && <div className="text-danger">{errors.previous_teaching_experience}</div>}
             </div>
             <div className="col-md-4">
-              <label className="form-label">Total Experience (Years):</label>
+              <label className="form-label">Total Experience (Years)<span style={{ color: "red" }}>*</span></label>
               <input
                 type="text"
                 className="form-control "
@@ -608,7 +623,7 @@ const FacultySignupPage = () => {
         </div>
         <div className="row mt-3">
         <div className="col-md-4">
-                <label className="form-label">Industry Experience (Years):</label>
+                <label className="form-label">Industry Experience (Years)<span style={{ color: "red" }}>*</span></label>
                 <input
                   type="number"
                   className="form-control "
@@ -620,7 +635,7 @@ const FacultySignupPage = () => {
                 {errors.industry_experience && <div className="text-danger">{errors.industry_experience}</div>}
               </div>
               <div className="col-md-4">
-                <label className="form-label ">Ratified:</label>
+                <label className="form-label ">Ratified<span style={{ color: "red" }}>*</span></label>
                 <input
                   type="text"
                   className="form-control "
@@ -632,7 +647,7 @@ const FacultySignupPage = () => {
                 {errors.ratified && <div className="text-danger">{errors.ratified}</div>}
               </div>
               <div className="col-md-4">
-                <label className="form-label">Official Mail ID:</label>
+                <label className="form-label">Official Mail ID<span style={{ color: "red" }}>*</span></label>
                 <input
                   type="email"
                   className="form-control "
@@ -646,7 +661,7 @@ const FacultySignupPage = () => {
         </div>
             <div className="row mt-3">
                 <div className="col-md-4">
-                  <label className="form-label">Phone Number (WhatsApp):</label>
+                  <label className="form-label">Phone Number (WhatsApp)<span style={{ color: "red" }}>*</span></label>
                   <input
                     type=""
                     className="form-control"
@@ -658,7 +673,7 @@ const FacultySignupPage = () => {
                   {errors.phone_number && <div className="text-danger">{errors.phone_number}</div>}
                 </div>
                 <div className="col-md-4">
-                  <label className="form-label">Course Network ID/Link:</label>
+                  <label className="form-label">Course Network ID/Link<span style={{ color: "red" }}>*</span></label>
                   <input
                     type="text"
                     className="form-control"
@@ -669,7 +684,7 @@ const FacultySignupPage = () => {
                   {errors.course_network_id && <div className="text-danger">{errors.course_network_id}</div>}
                 </div>
                 <div className="col-md-4">
-                <label className="form-label ">Faculty Profile Weblink (College):</label>
+                <label className="form-label ">Faculty Profile Weblink (College)<span style={{ color: "red" }}>*</span></label>
                 <input
                   type="text"
                   className="form-control "
@@ -682,7 +697,7 @@ const FacultySignupPage = () => {
             </div>
             <div className="row mt-3">
             <div className="col-md-4">
-                <label className="form-label ">Scopus ID:</label>
+                <label className="form-label ">Scopus ID</label>
                 <input
                   type="text"
                   className="form-control "
@@ -693,7 +708,7 @@ const FacultySignupPage = () => {
                 {errors.scopus_id && <div className="text-danger">{errors.scopus_id}</div>}
               </div>
               <div className="col-md-4">
-                <label className="form-label">ORCID:</label>
+                <label className="form-label">ORCID</label>
                 <input
                   type="text"
                   className="form-control "
@@ -704,7 +719,7 @@ const FacultySignupPage = () => {
                 {errors.orcid && <div className="text-danger">{errors.orcid}</div>}
               </div>
               <div className="col-md-4">
-                <label className="form-label ">Google Scholar ID:</label>
+                <label className="form-label ">Google Scholar ID</label>
                 <input
                   type="text"
                   className="form-control "
@@ -717,7 +732,7 @@ const FacultySignupPage = () => {
             </div>
             <div className="row mt-3">
             <div className="col-md-4">
-                <label className="form-label ">Vidwan Portal:</label>
+                <label className="form-label ">Vidwan Portal<span style={{ color: "red" }}>*</span></label>
                 <input
                   type="text"
                   className="form-control "
@@ -728,7 +743,7 @@ const FacultySignupPage = () => {
                 {errors.vidwan_portal && <div className="text-danger">{errors.vidwan_portal}</div>}
               </div>
               <div className="col-md-4">
-                <label className="form-label">Password:</label>
+                <label className="form-label">Password<span style={{ color: "red" }}>*</span></label>
                 <input
                   type="password"
                   className="form-control "

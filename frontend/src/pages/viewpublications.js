@@ -40,8 +40,8 @@ const PublicationsPage = () => {
     };
 
     return (
-        <div className="container my-4">
-            <h1 className="text-center text-dark mb-4"> Your Publications</h1>
+        <div className="container mt-2">
+            <h2 className="text-center text-dark mb-4"> Your Publications</h2>
             {publications.length > 0 ? (
                 <div className="row">
                     {publications.map(pub => (
@@ -72,6 +72,19 @@ const PublicationsPage = () => {
                                             
                                             {/* Show "Edit" button only for rejected publications */}
                                             {pub.status === 'Rejected by Department R&D Coordinator' && (
+                                                <button
+                                                    className="btn btn-warning mt-2"
+                                                    onClick={() => handleEditClick(pub)} // Handle edit button click
+                                                >
+                                                    Edit
+                                                </button>
+                                            )}
+                                             {pub.status === 'Rejected by Institute R&D Coordinator' && pub.rejection_reason && (
+                                                <div className="mt-2">
+                                                    <strong>Reason:</strong> {pub.rejection_reason}
+                                                </div>
+                                            )}
+                                            {pub.status === 'Rejected by Institute R&D Coordinator' && (
                                                 <button
                                                     className="btn btn-warning mt-2"
                                                     onClick={() => handleEditClick(pub)} // Handle edit button click
@@ -128,7 +141,7 @@ const PublicationsPage = () => {
                     ))}
                 </div>
             ) : (
-                <p className="text-center text-muted">No publications available for approval.</p>
+                <p className="text-center text-muted">No publications available.</p>
             )}
         </div>
     );

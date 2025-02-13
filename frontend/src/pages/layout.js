@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import Navbar from "./navbar";
 import Sidebar from "./sidebar";
-import CoordinatorSidebar from "./depcorsidebar"; // Import Coordinator Sidebar
+import CoordinatorSidebar from "./depcorsidebar"; // Department Coordinator Sidebar
+import InstituteCoordinatorSidebar from "./instcorsidebar"; // Institute Coordinator Sidebar
 
 const Layout = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -27,8 +28,10 @@ const Layout = ({ children }) => {
         {/* Render Sidebar based on role */}
         {isLoggedIn && (
           <div style={{ width: "250px", backgroundColor: "#f9f9f9" }}>
-            {role === "coordinator" ? (
-              <CoordinatorSidebar /> // Show Coordinator Sidebar
+            {role === "institutecoordinator" ? (
+              <InstituteCoordinatorSidebar /> // Show Institute Coordinator Sidebar
+            ) : role === "coordinator" ? (
+              <CoordinatorSidebar /> // Show Department Coordinator Sidebar
             ) : (
               <Sidebar /> // Show Faculty Sidebar
             )}
