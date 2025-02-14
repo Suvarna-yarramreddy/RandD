@@ -28,6 +28,10 @@ import ConsultancyForm from './pages/addconsultant';
 import InstCorViewPatents from './pages/instviewpatents';
 import ResearchForm from './pages/addscholar';
 import Viewscholars from './pages/viewscholar';
+import ConsultancyProjectsPage from './pages/viewconsultant';
+import EditSeedMoney from './pages/editseedmoney';
+import ProposalForm from './pages/addproposal';
+import ViewProposals from './pages/viewproposals';
 const App = () => {
   return (
     <Router>
@@ -59,6 +63,10 @@ const App = () => {
           <Route path="/instcorviewpatents" element={<InstCorViewPatents/>}/>
           <Route path="/addscholar" element= {<ResearchForm/>}/>
           <Route path="/viewscholars" element={<Viewscholars/>}/>
+          <Route path="/viewconsultants" element={<ConsultancyProjectsPage/>}/>
+          <Route path="/editseedmoney" element={<EditSeedMoney/>}/>
+          <Route path="/addproposal" element={<ProposalForm/>}/>
+          <Route path="/viewproposals" element={<ViewProposals/>}/>
         </Routes>
       </Layout>
     </Router>

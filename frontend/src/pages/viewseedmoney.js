@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const SeedMoneyPage = () => {
     const [seedMoneyApplications, setSeedMoneyApplications] = useState([]);
     const faculty_id = sessionStorage.getItem("faculty_id");
     const [visibleDetails, setVisibleDetails] = useState(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchSeedMoneyApplications = async () => {
@@ -15,6 +17,12 @@ const SeedMoneyPage = () => {
                     throw new Error("Failed to fetch seed money applications");
                 }
                 let data = await response.json();
+    
+                // Ensure students field is parsed as an array
+                data = data.map(app => ({
+                    ...app,
+                    students: typeof app.students === "string" ? JSON.parse(app.students) : app.students
+                }));
     
                 setSeedMoneyApplications(data);
             } catch (error) {
@@ -29,6 +37,10 @@ const SeedMoneyPage = () => {
         setVisibleDetails(visibleDetails === id ? null : id);
     };
 
+    const handleEdit = (app) => {
+        navigate('/editseedmoney', { state: { application: app } });
+    };
+
     return (
         <div className="container mt-2">
             <h2 className="text-center text-dark mb-4">Your Seed Money Applications</h2>
@@ -40,53 +52,62 @@ const SeedMoneyPage = () => {
                                 <div className="card-body flex-column">
                                     <h5 className="card-title">
                                         <strong>Project Title: </strong>
-                                        <a
-                                            href="#!"
-                                            onClick={() => handleToggleDetails(app.id)}
-                                            className="text-primary"
-                                        >
+                                        <a href="#!" onClick={() => handleToggleDetails(app.id)} className="text-primary">
                                             {app.projectTitle}
                                         </a>
                                     </h5>
                                     {visibleDetails === app.id && (
                                         <div className="overflow-auto" style={{ maxHeight: '200px' }}>
                                             <div className="card-details">
-                                                <div>
                                                 {app.financialYear && <p><strong>Financial Year:</strong> {app.financialYear}</p>}
-                                                    {app.facultyName && <p><strong>Faculty Name:</strong> {app.facultyName}</p>}
-                                                    {app.department && <p><strong>Department:</strong> {app.department}</p>}
-                                                    {app.numStudents!==0 && <p><strong>Number of Students:</strong> {app.numStudents}</p>}
-                                                    {app.students && app.students.length > 0 && (
-                                                        <div>
-                                                            <strong>Students Involved:</strong>
-                                                            <ul>
-                                                                {app.students.map((student, index) => (
-                                                                    <li key={index}>{student.name} (RegNo: {student.registration})</li>
-                                                                ))}
-                                                            </ul>
-                                                        </div>
-                                                    )}
-                                                    {app.projectTitle && <p><strong>Project Title:</strong> {app.projectTitle}</p>}
-                                                    {app.amountSanctioned && <p><strong>Amount Sanctioned:</strong> {app.amountSanctioned}</p>}
-                                                    {app.amountReceived && <p><strong>Amount Received:</strong> {app.amountReceived}</p>}
-                                                    {app.objectives && <p><strong>Objectives:</strong> {app.objectives}</p>}
-                                                    {app.outcomes && <p><strong>Expected Outcomes:</strong> {app.outcomes}</p>}
-                                                    {app.proof && app.proof.length > 0 && (
-                                                        <p><strong>Proof Documents:</strong> 
-                                                            {app.proof.map((file, index) => (
-                                                                <span key={index}>
-                                                                    <a href={`http://localhost:5000/${file}`} target="_blank" rel="noopener noreferrer">
-                                                                        View Proof {index + 1}
-                                                                    </a>{' '}
-                                                                </span>
-                                                            ))}
-                                                        </p>
-                                                    )}
-                                                    
-                                                </div>
+                                                {app.facultyName && <p><strong>Faculty Name:</strong> {app.facultyName}</p>}
+                                                {app.department && <p><strong>Department:</strong> {app.department}</p>}
+                                                {app.numStudents !== 0 && <p><strong>Number of Students:</strong> {app.numStudents}</p>}
+                                                {Array.isArray(app.students) && app.students.length > 0 ? (
+    <div>
+        <strong>Students Involved:</strong>
+        <table className="table table-bordered mt-2">
+            <thead>
+                <tr>
+                    <th>S. No</th>
+                    <th>Student Name</th>
+                    <th>Registration Number</th>
+                </tr>
+            </thead>
+            <tbody>
+                {app.students.map((student, index) => (
+                    <tr key={index}>
+                        <td>{index + 1}</td>
+                        <td>{student.name}</td>
+                        <td>{student.registration}</td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    </div>
+) : (
+    <p>No students added</p>
+)}
+
+                                                {app.amountSanctioned && <p><strong>Amount Sanctioned:</strong> {app.amountSanctioned}</p>}
+                                                {app.amountReceived && <p><strong>Amount Received:</strong> {app.amountReceived}</p>}
+                                                {app.objectives && <p><strong>Objectives:</strong> {app.objectives}</p>}
+                                                {app.outcomes && <p><strong>Expected Outcomes:</strong> {app.outcomes}</p>}
+                                                {app.proof && app.proof.length > 0 && (
+                                                    <p><strong>Proof Documents:</strong> 
+                                                        {app.proof.map((file, index) => (
+                                                            <span key={index}>
+                                                                <a href={`http://localhost:5000/${file}`} target="_blank" rel="noopener noreferrer">
+                                                                    View Proof {index + 1}
+                                                                </a>{' '}
+                                                            </span>
+                                                        ))}
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
                                     )}
+                                    <button className="btn btn-primary mt-2" onClick={() => handleEdit(app)}>Edit</button>
                                 </div>
                             </div>
                         </div>

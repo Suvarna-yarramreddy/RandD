@@ -1,7 +1,9 @@
 import React, { useState } from "react";
-
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 function ConsultancyForm() {
-
+  const faculty_id = sessionStorage.getItem("faculty_id");
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     financialYear: "",
     department: "",
@@ -145,62 +147,92 @@ function ConsultancyForm() {
     }));
     validateField("report", newFiles); // real-time validation for proof files
   };
-  const handleSubmit = (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault(); // Prevent page reload
   
     let formIsValid = true;
     const newErrors = {};
-  
+
     // Validate all fields
     Object.keys(formData).forEach((key) => {
-      const value = formData[key];
-      validateField(key, value);
-      
-      // Manually collect errors for required fields
-      if (!value || (typeof value === "string" && !value.trim())) {
-        newErrors[key] = `${key.replace(/([A-Z])/g, " $1")} is required.`; // Converts "titleofconsultancy" to "Title of consultancy"
-        formIsValid = false;
-      }
+        const value = formData[key];
+        validateField(key, value);
+
+        // Manually collect errors for required fields
+        if (!value || (typeof value === "string" && !value.trim())) {
+            newErrors[key] = `${key.replace(/([A-Z])/g, " $1")} is required.`; // Converts "titleofconsultancy" to "Title of consultancy"
+            formIsValid = false;
+        }
     });
-  
+
     // Validate faculties if numoffaculty > 0
     if (formData.numoffaculty > 0) {
-      formData.faculties.forEach((faculty, index) => {
-        if (!faculty.name.trim()) {
-          newErrors[`faculty-name-${index}`] = `Faculty ${index + 1}: Name is required.`;
-          formIsValid = false;
-        }
-        if (!faculty.designation.trim()) {
-          newErrors[`faculty-designation-${index}`] = `Faculty ${index + 1}: Designation is required.`;
-          formIsValid = false;
-        }
-        if (!faculty.mailid.trim() || !/^\S+@\S+\.\S+$/.test(faculty.mailid)) {
-          newErrors[`faculty-mailid-${index}`] = `Faculty ${index + 1}: Valid email is required.`;
-          formIsValid = false;
-        }
-      });
+        formData.faculties.forEach((faculty, index) => {
+            if (!faculty.name.trim()) {
+                newErrors[`faculty-name-${index}`] = `Faculty ${index + 1}: Name is required.`;
+                formIsValid = false;
+            }
+            if (!faculty.designation.trim()) {
+                newErrors[`faculty-designation-${index}`] = `Faculty ${index + 1}: Designation is required.`;
+                formIsValid = false;
+            }
+            if (!faculty.mailid.trim() || !/^\S+@\S+\.\S+$/.test(faculty.mailid)) {
+                newErrors[`faculty-mailid-${index}`] = `Faculty ${index + 1}: Valid email is required.`;
+                formIsValid = false;
+            }
+        });
     }
-  
+
     // Validate report field (must have at least one file)
     if (!formData.report || formData.report.length === 0) {
-      newErrors.report = "Please upload at least one report file.";
-      formIsValid = false;
+        newErrors.report = "Please upload at least one report file.";
+        formIsValid = false;
     }
-  
+
     // Update errors state
     setErrors(newErrors);
-  
+
     // If there are errors, prevent submission
     if (!formIsValid) {
-      alert("Please fix errors before submitting.");
-      return;
+        alert("Please fix errors before submitting.");
+        return;
     }
-  
-    // ✅ If form is valid, proceed with submission
-    console.log("Form submitted successfully:", formData);
-    alert("Form submitted successfully!");
-  };
-  
+
+
+    // ✅ Prepare FormData for API submission
+    const formDataToSend = new FormData();
+    
+    // Append faculty_id
+    formDataToSend.append("faculty_id",faculty_id);
+
+    // Append other fields
+    Object.keys(formData).forEach((key) => {
+        if (key === "faculties") {
+            formDataToSend.append(key, JSON.stringify(formData[key])); // Convert faculties array to JSON
+        } else if (key === "report") {
+            // Append multiple report files
+            formData[key].forEach((file) => formDataToSend.append("report", file));
+        } else {
+            formDataToSend.append(key, formData[key]);
+        }
+    });
+
+    // ✅ Make API request
+    try {
+        const response = await axios.post("http://localhost:5000/addConsultancy", formDataToSend, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+        alert("Form submitted successfully!");
+        navigate("/viewconsultants");
+    } catch (error) {
+        console.error("Error submitting form:", error.response?.data || error.message);
+        alert("Error submitting form. Please try again.");
+    }
+};
+
   
 
 
@@ -210,7 +242,7 @@ function ConsultancyForm() {
       <form onSubmit={handleSubmit} encType="multipart/form-data">
         <div className="row">
           <div className="col-md-6 mb-3">
-            <label className="form-label">Financial Year</label>
+            <label className="form-label">Financial Year<span style={{ color: "red" }}>*</span></label>
             <select
             className="form-select"
             name="financialYear"
@@ -226,7 +258,7 @@ function ConsultancyForm() {
               {errors.financialYear && <div className="text-danger">{errors.financialYear}</div>}
             </div>
           <div className="col-md-6 mb-3">
-            <label className="form-label">Department</label>
+            <label className="form-label">Department<span style={{ color: "red" }}>*</span></label>
             <input
               type="text"
               className="form-control"
@@ -239,7 +271,7 @@ function ConsultancyForm() {
           </div>
           <div className="row">
           <div className="col-md-6 mb-3">
-            <label className="form-label">Start Date Of Project</label>
+            <label className="form-label">Start Date Of Project<span style={{ color: "red" }}>*</span></label>
             <input
                 type="date"
                 className="form-control"
@@ -252,7 +284,7 @@ function ConsultancyForm() {
         {/* Student Details */}
         
         <div className="col-md-6 mb-3">
-          <label className="form-label">Number Of Faculty Involved</label>
+          <label className="form-label">Number Of Faculty Involved<span style={{ color: "red" }}>*</span></label>
           <input
             type="number"
             className="form-control"
@@ -270,7 +302,7 @@ function ConsultancyForm() {
     <div className="row" key={index}>
       {/* Faculty Name */}
       <div className="col-md-4 mb-3">
-        <label className="form-label">Name (Faculty {index + 1})</label>
+        <label className="form-label">Name (Faculty {index + 1})<span style={{ color: "red" }}>*</span></label>
         <input
           type="text"
           className="form-control"
@@ -285,7 +317,7 @@ function ConsultancyForm() {
 
       {/* Faculty Designation */}
       <div className="col-md-4 mb-3">
-        <label className="form-label">Designation (Faculty {index + 1})</label>
+        <label className="form-label">Designation (Faculty {index + 1})<span style={{ color: "red" }}>*</span></label>
         <input
           type="text"
           className="form-control"
@@ -300,7 +332,7 @@ function ConsultancyForm() {
 
       {/* Faculty Email */}
       <div className="col-md-4 mb-3">
-        <label className="form-label">Email ID (Faculty {index + 1})</label>
+        <label className="form-label">Email ID (Faculty {index + 1})<span style={{ color: "red" }}>*</span></label>
         <input
           type="email"
           className="form-control"
@@ -320,7 +352,7 @@ function ConsultancyForm() {
         {/* Project Details */}
         <div className="row">
           <div className="col-md-6 mb-3">
-            <label className="form-label">Title of the consultancy</label>
+            <label className="form-label">Title of the consultancy<span style={{ color: "red" }}>*</span></label>
             <input
               type="text"
               className="form-control"
@@ -331,7 +363,7 @@ function ConsultancyForm() {
             {errors.titleofconsultancy && <div className="text-danger">{errors.titleofconsultancy}</div>}
           </div>
           <div className="col-md-6 mb-3">
-            <label className="form-label">Domain of the consultancy</label>
+            <label className="form-label">Domain of the consultancy<span style={{ color: "red" }}>*</span></label>
             <input
               type="text"
               className="form-control"
@@ -342,7 +374,7 @@ function ConsultancyForm() {
             {errors.domainofconsultancy && <div className="text-danger">{errors.domainofconsultancy}</div>}
           </div>
           <div className="col-md-6 mb-3">
-            <label className="form-label">Client Organization</label>
+            <label className="form-label">Client Organization<span style={{ color: "red" }}>*</span></label>
             <input
               type="text"
               className="form-control"
@@ -353,7 +385,7 @@ function ConsultancyForm() {
             {errors.clientorganization && <div className="text-danger">{errors.clientorganization}</div>}
           </div>
           <div className="col-md-6 mb-3">
-            <label className="form-label">Client Address</label>
+            <label className="form-label">Client Address<span style={{ color: "red" }}>*</span></label>
             <input
               type="text"
               className="form-control"
@@ -366,7 +398,7 @@ function ConsultancyForm() {
           </div>
           <div className='row'>
           <div className="col-md-6 mb-3">
-            <label className="form-label">Amount Received From Client</label>
+            <label className="form-label">Amount Received From Client<span style={{ color: "red" }}>*</span></label>
             <input
               type="text"
               className="form-control"
@@ -377,7 +409,7 @@ function ConsultancyForm() {
             {errors.amountreceived && <div className="text-danger">{errors.amountreceived}</div>}
           </div>
           <div className="col-md-6 mb-3">
-            <label className="form-label">Date Of Amount Received</label>
+            <label className="form-label">Date Of Amount Received<span style={{ color: "red" }}>*</span></label>
             <input
                 type="date"
                 className="form-control"
@@ -391,7 +423,7 @@ function ConsultancyForm() {
 
             <div className="row">
             <div className="col-md-6 mb-3">
-            <label className="form-label">Facilities used to Do Consultancy</label>
+            <label className="form-label">Facilities used to Do Consultancy<span style={{ color: "red" }}>*</span></label>
             <input
               type="text"
               className="form-control"
@@ -402,7 +434,7 @@ function ConsultancyForm() {
             {errors.facilities && <div className="text-danger">{errors.facilities}</div>}
           </div>
           <div className="col-md-6 mb-3">
-            <label className="form-label">Report</label>
+            <label className="form-label">Report<span style={{ color: "red" }}>*</span></label>
             <div className="custom-file">
                 <input
                 type="file"
