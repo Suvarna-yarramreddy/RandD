@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';  // Import useNavigate
 
 const ViewProposals = () => {
     const [proposals, setProposals] = useState([]);
     const [visibleDetails, setVisibleDetails] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const navigate = useNavigate(); // Initialize useNavigate
 
     const faculty_id = sessionStorage.getItem("faculty_id");
 
@@ -32,6 +34,11 @@ const ViewProposals = () => {
         setVisibleDetails(visibleDetails === id ? null : id);
     };
 
+    // Navigate to edit proposal page with ID
+    const handleEdit = (proposal) => {
+        navigate(`/editproposal`,{ state: {proposal } }); // Pass ID as route parameter
+    };
+
     if (loading) {
         return <div className="text-center">Loading...</div>;
     }
@@ -45,8 +52,8 @@ const ViewProposals = () => {
             <h2 className="text-center text-dark mb-4">Project Proposals</h2>
             {proposals.length > 0 ? (
                 <div className="row">
-                    {proposals.map((proposal) => (
-                        <div className="col-md-6 mb-4" key={proposal.id}>
+                    {proposals.map((prop) => (
+                        <div className="col-md-6 mb-4" key={prop.id}>
                             <div className="card">
                                 <div className="card-body d-flex flex-column">
                                     <div className="d-flex justify-content-between align-items-center mb-3">
@@ -54,27 +61,33 @@ const ViewProposals = () => {
                                             Project Title:&nbsp;
                                             <a
                                                 href="#!"
-                                                onClick={() => handleToggleDetails(proposal.id)}
-                                                aria-expanded={visibleDetails === proposal.id}
+                                                onClick={() => handleToggleDetails(prop.id)}
+                                                aria-expanded={visibleDetails === prop.id}
                                                 className="text-primary"
                                             >
-                                                {proposal.projectTitle}
+                                                {prop.projectTitle}
                                             </a>
                                         </h5>
+                                        <button 
+                                            className="btn btn-warning btn-sm"
+                                            onClick={() => handleEdit(prop)} // Edit button
+                                        >
+                                            Edit
+                                        </button>
                                     </div>
-                                    {visibleDetails === proposal.id && (
+                                    {visibleDetails === prop.id && (
                                         <div className="card-details overflow-auto" style={{ maxHeight: '250px' }}>
-                                            {proposal.referenceNumber && <p><strong>Reference Number:</strong> {proposal.referenceNumber}</p>}
-                                            {proposal.agencyScheme && <p><strong>Agency/Scheme:</strong> {proposal.agencyScheme}</p>}
-                                            {proposal.submissionYear && <p><strong>Submission Year:</strong> {proposal.submissionYear}</p>}
-                                            {proposal.submissionDate && <p><strong>Submission Date:</strong> {proposal.submissionDate}</p>}
-                                            {proposal.piName && <p><strong>Principal Investigator:</strong> {proposal.piName}</p>}
-                                            {proposal.piDepartment && <p><strong>PI Department:</strong> {proposal.piDepartment}</p>}
-                                            {proposal.piDesignation && <p><strong>PI Designation:</strong> {proposal.piDesignation}</p>}
-                                            {proposal.piPhone && <p><strong>PI Phone:</strong> {proposal.piPhone}</p>}
-                                            {proposal.piEmail && <p><strong>PI Email:</strong> {proposal.piEmail}</p>}
-                                            {proposal.amountRequested && <p><strong>Amount Requested:</strong> ₹{proposal.amountRequested}</p>}
-                                            {proposal.projectStatus && <p><strong>Project Status:</strong> {proposal.projectStatus}</p>}
+                                            {prop.referenceNumber && <p><strong>Reference Number:</strong> {prop.referenceNumber}</p>}
+                                            {prop.agencyScheme && <p><strong>Agency/Scheme:</strong> {prop.agencyScheme}</p>}
+                                            {prop.submissionYear && <p><strong>Submission Year:</strong> {prop.submissionYear}</p>}
+                                            {prop.submissionDate && <p><strong>Submission Date:</strong> {prop.submissionDate}</p>}
+                                            {prop.piName && <p><strong>PI Name:</strong> {prop.piName}</p>}
+                                            {prop.piDepartment && <p><strong>PI Department:</strong> {prop.piDepartment}</p>}
+                                            {prop.piDesignation && <p><strong>PI Designation:</strong> {prop.piDesignation}</p>}
+                                            {prop.piPhone && <p><strong>PI Phone:</strong> {prop.piPhone}</p>}
+                                            {prop.piEmail && <p><strong>PI Email:</strong> {prop.piEmail}</p>}
+                                            {prop.amountRequested && <p><strong>Amount Requested:</strong> ₹{prop.amountRequested}</p>}
+                                            {prop.projectStatus && <p><strong>Project Status:</strong> {prop.projectStatus}</p>}
                                         </div>
                                     )}
                                 </div>

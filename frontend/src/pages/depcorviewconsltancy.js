@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 const ConsultancyProjectsPage = () => {
     const [consultancyProjects, setConsultancyProjects] = useState([]);
-    const faculty_id = sessionStorage.getItem("faculty_id");
+    const coordinator_id = sessionStorage.getItem("coordinatorid"); // Change faculty_id to coordinator_id
     const [visibleDetails, setVisibleDetails] = useState(null);
-    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchConsultancyProjects = async () => {
             try {
-                const response = await fetch(`http://localhost:5000/getConsultancy/${faculty_id}`);
+                const response = await fetch(`http://localhost:5000/getConsultancyByCoordinator?coordinatorid=${coordinator_id}`);
                 if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error("Error response:", errorText);
                     throw new Error("Failed to fetch consultancy projects");
                 }
                 let data = await response.json();
@@ -21,19 +21,15 @@ const ConsultancyProjectsPage = () => {
             }
         };
         fetchConsultancyProjects();
-    }, [faculty_id]);
+    }, [coordinator_id]);
 
     const handleToggleDetails = (consultancy_id) => {
         setVisibleDetails(visibleDetails === consultancy_id ? null : consultancy_id);
     };
 
-    const handleEdit = (project) => {
-        navigate('/editconsultancy', { state: { project } });
-    };
-
     return (
         <div className="container mt-2">
-            <h2 className="text-center text-dark mb-4">Your Consultancy Projects</h2>
+            <h2 className="text-center text-dark mb-4">Department Consultancy Projects</h2>
             {consultancyProjects.length > 0 ? (
                 <div className="row">
                     {consultancyProjects.map(project => (
@@ -53,7 +49,7 @@ const ConsultancyProjectsPage = () => {
                                     {visibleDetails === project.consultancy_id && (
                                         <div className="overflow-auto" style={{ maxHeight: '250px' }}>
                                             <div className="card-details">
-                                            {project.financialYear && <p><strong>Financial Year:</strong> {project.financialYear}</p>}
+                                                {project.financialYear && <p><strong>Financial Year:</strong> {project.financialYear}</p>}
                                                 {project.department && <p><strong>Department:</strong> {project.department}</p>}
                                                 {project.startdateofProject && <p><strong>Start Date:</strong> {project.startdateofProject}</p>}
                                                 {project.numoffaculty && <p><strong>Number of Faculty Involved:</strong> {project.numoffaculty}</p>}
@@ -63,53 +59,52 @@ const ConsultancyProjectsPage = () => {
                                                 {project.amountreceived && <p><strong>Amount Received:</strong> {project.amountreceived}</p>}
                                                 {project.dateofamountreceived && <p><strong>Date of Amount Received:</strong> {project.dateofamountreceived}</p>}
                                                 {project.facilities && <p><strong>Facilities Used:</strong> {project.facilities}</p>}
-                                                
-                                                {project.faculties && typeof project.faculties === "string" ? (
-                                                                <div>
-                                                                    <strong>Faculty Members Involved:</strong>
-                                                                    <table className="table table-bordered mt-2">
-                                                                        <thead className="thead-dark">
-                                                                            <tr>
-                                                                                <th>Name</th>
-                                                                                <th>Designation</th>
-                                                                                <th>Mail ID</th>
-                                                                            </tr>
-                                                                        </thead>
-                                                                        <tbody>
-                                                                            {JSON.parse(project.faculties).map((faculty, index) => (
-                                                                                <tr key={index}>
-                                                                                    <td>{faculty.name}</td>
-                                                                                    <td>{faculty.designation}</td>
-                                                                                    <td>{faculty.mailid}</td>
-                                                                                </tr>
-                                                                            ))}
-                                                                        </tbody>
-                                                                    </table>
-                                                                </div>
-                                                            ) : project.faculties && Array.isArray(project.faculties) ? (
-                                                                <div>
-                                                                    <strong>Faculty Members Involved:</strong>
-                                                                    <table className="table table-bordered mt-2">
-                                                                        <thead className="thead-dark">
-                                                                            <tr>
-                                                                                <th>Name</th>
-                                                                                <th>Designation</th>
-                                                                                <th>Mail ID</th>
-                                                                            </tr>
-                                                                        </thead>
-                                                                        <tbody>
-                                                                            {project.faculties.map((faculty, index) => (
-                                                                                <tr key={index}>
-                                                                                    <td>{faculty.name}</td>
-                                                                                    <td>{faculty.designation}</td>
-                                                                                    <td>{faculty.mailid}</td>
-                                                                                </tr>
-                                                                            ))}
-                                                                        </tbody>
-                                                                    </table>
-                                                                </div>
-                                                            ) : null}
 
+                                                {project.faculties && typeof project.faculties === "string" ? (
+                                                    <div>
+                                                        <strong>Faculty Members Involved:</strong>
+                                                        <table className="table table-bordered mt-2">
+                                                            <thead className="thead-dark">
+                                                                <tr>
+                                                                    <th>Name</th>
+                                                                    <th>Designation</th>
+                                                                    <th>Mail ID</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {JSON.parse(project.faculties).map((faculty, index) => (
+                                                                    <tr key={index}>
+                                                                        <td>{faculty.name}</td>
+                                                                        <td>{faculty.designation}</td>
+                                                                        <td>{faculty.mailid}</td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                ) : project.faculties && Array.isArray(project.faculties) ? (
+                                                    <div>
+                                                        <strong>Faculty Members Involved:</strong>
+                                                        <table className="table table-bordered mt-2">
+                                                            <thead className="thead-dark">
+                                                                <tr>
+                                                                    <th>Name</th>
+                                                                    <th>Designation</th>
+                                                                    <th>Mail ID</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {project.faculties.map((faculty, index) => (
+                                                                    <tr key={index}>
+                                                                        <td>{faculty.name}</td>
+                                                                        <td>{faculty.designation}</td>
+                                                                        <td>{faculty.mailid}</td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                ) : null}
 
                                                 {project.report && typeof project.report === "string" ? (
                                                     <p><strong>Reports:</strong> 
@@ -135,12 +130,6 @@ const ConsultancyProjectsPage = () => {
                                             </div>
                                         </div>
                                     )}
-                                    <button 
-                                        className="btn btn-warning mt-2" 
-                                        onClick={() => handleEdit(project)}
-                                    >
-                                        Edit
-                                    </button>
                                 </div>
                             </div>
                         </div>

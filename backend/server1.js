@@ -269,11 +269,11 @@ app.get('/api/stats/:facultyId', async (req, res) => {
               dir = './uploads/patents/';
           } else if (req.url.includes('addPublication')) {
               dir = './uploads/publications/';
-          } else if (req.url.includes('addSeedMoney') || (req.url.includes('/updateSeedMoney/:id'))) {
+          } else if (req.url.includes('addSeedMoney') || req.url.match(/updateSeedMoney\/\d+/)) {
               dir = './uploads/seedmoney/';
-          }  else if (req.url.includes('addConsultancy')) {
+          }  else if (req.url.includes('addConsultancy') || req.url.match(/updateConsultancy\/\d+/)) {
             dir = './uploads/consultancy/';
-        } else if (req.url.includes('addResearch')) {
+        } else if (req.url.includes('addResearch') || req.url.match(/updatescholar\/\d+/)) {
             dir = './uploads/research/';
         }  else {
               dir = './uploads/others/'; // Default directory
@@ -775,64 +775,7 @@ app.get("/getSeedMoney/:faculty_id", (req, res) => {
 
 
 
-// Route to Update SeedMoney
-app.put("/updateSeedMoney/:id", upload.array("proof", 5), (req, res) => {
-    const { id } = req.params;
-    const {
-        faculty_id,
-        financialYear,
-        facultyName,
-        department,
-        numStudents,
-        projectTitle,
-        amountSanctioned,
-        amountReceived,
-        objectives,
-        outcomes,
-        students // Updated students JSON array
-    } = req.body;
 
-    let proofUrls = req.files.length > 0 ? req.files.map(file => `uploads/seedmoney/${file.filename}`) : null;
-
-    // Fetch existing record
-    const fetchQuery = `SELECT * FROM SeedMoney WHERE id = ?`;
-    db.query(fetchQuery, [id], (err, results) => {
-        if (err) {
-            console.error("Error fetching SeedMoney:", err);
-            return res.status(500).send("Error fetching SeedMoney.");
-        }
-        if (results.length === 0) {
-            return res.status(404).send("SeedMoney record not found.");
-        }
-
-        const existingData = results[0];
-
-        const updateQuery = `UPDATE SeedMoney SET faculty_id=?, financialYear=?, facultyName=?, department=?, numStudents=?, 
-            projectTitle=?, amountSanctioned=?, amountReceived=?, objectives=?, outcomes=?, students=?, proof=?, updatedAt=CURRENT_TIMESTAMP WHERE id=?`;
-
-        db.query(updateQuery, [
-            faculty_id || existingData.faculty_id,
-            financialYear || existingData.financialYear,
-            facultyName || existingData.facultyName,
-            department || existingData.department,
-            numStudents || existingData.numStudents,
-            projectTitle || existingData.projectTitle,
-            amountSanctioned || existingData.amountSanctioned,
-            amountReceived || existingData.amountReceived,
-            objectives || existingData.objectives,
-            outcomes || existingData.outcomes,
-            JSON.stringify(students || JSON.parse(existingData.students || "[]")),
-            JSON.stringify(proofUrls || JSON.parse(existingData.proof || "[]")),
-            id
-        ], (updateErr) => {
-            if (updateErr) {
-                console.error("Error updating SeedMoney:", updateErr);
-                return res.status(500).send("Error updating SeedMoney.");
-            }
-            res.status(200).send("SeedMoney updated successfully.");
-        });
-    });
-});
 app.post('/addFundedProject', (req, res) => {
     const {
         faculty_id, financialYear, applicationNumber, agency, scheme, piName, piDept, piContact, piEmail,
@@ -880,6 +823,33 @@ app.get('/getFundedProjects/:id', (req, res) => {
         res.status(200).json(result); // Return all projects
     });
 });
+
+app.put("/updateFundedProject/:id", (req, res) => {
+    const { id } = req.params;
+    const {
+        financialYear, applicationNumber, agency, scheme, piName, piDept, piContact, piEmail,
+        copiName, copiDept, copiContact, copiEmail, duration, title, status,
+        startDate, objectives, outcomes, amountApplied, amountReceived,
+        amountSanctioned, totalExpenditure
+    } = req.body;
+
+    const updateFields = {
+        financialYear, applicationNumber, agency, scheme, piName, piDept, piContact, piEmail,
+        copiName, copiDept, copiContact, copiEmail, duration, title, status,
+        startDate, objectives, outcomes, amountApplied, amountReceived,
+        amountSanctioned, totalExpenditure
+    };
+
+    const sql = "UPDATE fundedprojects SET ? WHERE id = ?";
+    db.query(sql, [updateFields, id], (err, result) => {
+        if (err) {
+            console.error("Error updating funded project:", err); // Log the error
+            return res.status(500).json({ error: err.message });
+        }
+        res.json({ message: "Funded Project updated successfully", result });
+    });
+});
+
 app.post('/addConsultancy', upload.array('report', 10), (req, res) => {
     const {
         faculty_id, financialYear, department, startdateofProject, numoffaculty, titleofconsultancy,
@@ -938,32 +908,92 @@ app.get('/getConsultancy/:id', (req, res) => {
     });
 });
 
-app.put('/updateSeedMoney/:id', upload.array('proof', 10), async (req, res) => {
-    const { id } = req.params;
-    let updatedData = req.body;
+app.put('/updateConsultancy/:id', upload.array('report', 10), (req, res) => {
+    const consultancyId = req.params.id;
+    const {
+        titleofconsultancy,
+        financialYear,
+        department,
+        startdateofProject,
+        numoffaculty,
+        domainofconsultancy,
+        clientorganization,
+        clientaddress,
+        amountreceived,
+        dateofamountreceived,
+        facilities,
+        faculties,
+        existingFiles  // Handle the existing files being sent from client
+    } = req.body;
 
-    try {
-        // Extract file paths from uploaded files
-        if (req.files && req.files.length > 0) {
-            const filePaths = req.files.map(file => file.path); // Store file paths
-            updatedData.proof = JSON.stringify(filePaths); // Convert array to JSON for DB storage
+    // Ensure uploaded files exist
+    const uploadedFiles = req.files || [];
+
+    // Handle existing files, if present, safely
+    let existingFilesParsed = [];
+    if (existingFiles) {
+        try {
+            existingFilesParsed = JSON.parse(existingFiles);  // Parsing the stringified array of existing files
+        } catch (error) {
+            return res.status(400).send('Invalid existingFiles data');
         }
-
-        // Update database
-        db.query('UPDATE seedmoney SET ? WHERE id = ?', [updatedData, id], (err, result) => {
-            if (err) {
-                console.error("Error updating seed money:", err);
-                return res.status(500).json({ error: "Failed to update" });
-            }
-            res.json({ message: "Seed money application updated successfully" });
-        });
-
-    } catch (error) {
-        console.error("Error updating seed money:", error);
-        res.status(500).json({ error: "Server error" });
     }
+
+    // Map uploaded files to store file URLs (relative paths)
+    const updatedReport = uploadedFiles.map(file => ({
+        path: `/uploads/consultancy/${file.filename}`,  // Construct the file URL (relative path)
+        originalname: file.originalname
+    }));
+
+    // Combine existing files with the updated files if needed
+    const finalReport = [...existingFilesParsed, ...updatedReport];
+
+    const query = `
+        UPDATE consultancy_projects
+        SET
+            titleofconsultancy = ?,
+            financialYear = ?,
+            department = ?,
+            startdateofProject = ?,
+            numoffaculty = ?,
+            domainofconsultancy = ?,
+            clientorganization = ?,
+            clientaddress = ?,
+            amountreceived = ?,
+            dateofamountreceived = ?,
+            facilities = ?,
+            report = ?,
+            faculties = ?
+        WHERE consultancy_id = ?
+    `;
+
+    const values = [
+        titleofconsultancy,
+        financialYear,
+        department,
+        startdateofProject,
+        numoffaculty,
+        domainofconsultancy,
+        clientorganization,
+        clientaddress,
+        amountreceived,
+        dateofamountreceived,
+        facilities,
+        JSON.stringify(finalReport),  // Convert report array to JSON string
+        JSON.stringify(faculties),
+        consultancyId
+    ];
+
+    db.query(query, values, (err, result) => {
+        if (err) {
+            console.error('Error updating project:', err);
+            return res.status(500).send('Error updating project');
+        }
+        res.send('Project updated successfully!');
+    });
 });
 
+  
 app.post("/addResearch", upload.fields([
     { name: "admissionLetter", maxCount: 1 },
     { name: "guideAllotmentLetter", maxCount: 1 },
@@ -1022,51 +1052,99 @@ app.get('/getscholars/:faculty_id', (req, res) => {
     });
 });
 
-app.post("/addProposal",  (req, res) => {
-    const {
-        faculty_id,
-        referenceNumber,
-        agencyScheme,
-        submissionYear,
-        submissionDate,
-        piName,
-        piDepartment,
-        piDesignation,
-        piPhone,
-        piEmail,
-        projectTitle,
-        amountRequested,
-        projectStatus
-    } = req.body;
+app.put("/updatescholar/:id", upload.fields([
+    { name: "admissionLetter", maxCount: 1 },
+    { name: "guideAllotmentLetter", maxCount: 1 },
+    { name: "completionProceedings", maxCount: 1 }
+]), (req, res) => {
+    const { id } = req.params;
+    const { workTitle, guideName, guideDepartment, scholarName, scholarDepartment, admissionDate, university, admissionStatus, awardDate, fellowship } = req.body;
+    
+    let fileUpdates = {};
+    if (req.files) {
+        if (req.files.admissionLetter) fileUpdates.admissionLetter = `uploads/research/${req.files.admissionLetter[0].filename}`;
+        if (req.files.guideAllotmentLetter) fileUpdates.guideAllotmentLetter = `uploads/research/${req.files.guideAllotmentLetter[0].filename}`;
+        if (req.files.completionProceedings) fileUpdates.completionProceedings = `uploads/research/${req.files.completionProceedings[0].filename}`;
+    }
 
-    const query = `
-        INSERT INTO proposals 
-        (faculty_id,referenceNumber, agencyScheme, submissionYear, submissionDate, piName, piDepartment, piDesignation, piPhone, piEmail, projectTitle, amountRequested, projectStatus) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
-    `;
+    const updateFields = {
+        workTitle, guideName, guideDepartment, scholarName, scholarDepartment,
+        admissionDate, university, admissionStatus, awardDate, fellowship, ...fileUpdates
+    };
 
-    db.query(query, [
-        faculty_id,referenceNumber, agencyScheme, submissionYear, submissionDate, piName, piDepartment,
-        piDesignation, piPhone, piEmail, projectTitle, amountRequested, projectStatus
-    ], (err, result) => {
-        if (err) {
-            console.error("Error inserting proposal data:", err);
-            return res.status(500).send("Error while inserting proposal data");
-        }
-        res.status(200).send("Proposal data added successfully");
+    const sql = "UPDATE research SET ? WHERE id = ?";
+    db.query(sql, [updateFields, id], (err, result) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ message: "Scholar updated successfully", result });
     });
 });
 
-app.get('/getProposals/:faculty_id', (req, res) => {
-    const faculty_id = req.params.faculty_id;
-    const query = `SELECT * FROM proposals WHERE faculty_id = ?`;
 
-    db.query(query, [faculty_id], (err, results) => {
-        if (err) {
-            console.error('Error fetching proposals:', err);
-            return res.status(500).json({ error: 'Failed to fetch proposals' });
+app.post("/addProposal", async (req, res) => {
+    try {
+        const {
+            faculty_id, referenceNumber, agencyScheme, submissionYear, submissionDate,
+            piName, piDepartment, piDesignation, piPhone, piEmail, projectTitle,
+            amountRequested, projectStatus
+        } = req.body;
+
+        const query = `
+            INSERT INTO proposals 
+            (faculty_id, referenceNumber, agencyScheme, submissionYear, submissionDate, 
+            piName, piDepartment, piDesignation, piPhone, piEmail, projectTitle, 
+            amountRequested, projectStatus) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+
+        const [result] = await db.promise().query(query, [
+            faculty_id, referenceNumber, agencyScheme, submissionYear, submissionDate,
+            piName, piDepartment, piDesignation, piPhone, piEmail, projectTitle,
+            amountRequested, projectStatus
+        ]);
+
+        res.status(201).json({ message: "Proposal added successfully", id: result.insertId });
+    } catch (err) {
+        console.error("Error inserting proposal data:", err);
+        res.status(500).json({ error: "Error while inserting proposal data" });
+    }
+});
+
+// Get Proposals
+app.get('/getProposals/:faculty_id', async (req, res) => {
+    try {
+        const { faculty_id } = req.params;
+        const query = `SELECT * FROM proposals WHERE faculty_id = ?`;
+        const [results] = await db.promise().query(query, [faculty_id]);
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: "No proposals found" });
         }
-        res.json(results);
+
+        res.status(200).json(results);
+    } catch (err) {
+        console.error('Error fetching proposals:', err);
+        res.status(500).json({ error: 'Failed to fetch proposals' });
+    }
+});
+
+// Update Proposal
+app.put('/updateProposal/:id', (req, res) => {
+    const { id } = req.params;
+    const { referenceNumber,agencyScheme,submissionYear,submissionDate,piName,piDepartment,piDesignation,piPhone,piEmail,projectTitle,
+        amountRequested,projectStatus
+     } = req.body;
+
+     const updateFields={
+        referenceNumber,agencyScheme,submissionYear,submissionDate,piName,piDepartment,piDesignation,piPhone,piEmail,projectTitle,
+        amountRequested,projectStatus
+     };
+    const sql = `UPDATE proposals SET ? WHERE id = ?`;
+    db.query(sql, [updateFields, id], (err, result) => {
+        if (err){
+            console.error("Error updating Proposal:",err);
+            return res.status(500).json({error:err.message});
+        } 
+        res.json({message:"Proposal updated successfully",result});
     });
 });
 
@@ -1307,6 +1385,261 @@ app.put('/rejectPatent/:patentId', (req, res) => {
     });
 });
 
+app.get('/getSeedMoneyByDepartment', (req, res) => {
+    const coordinatorId = req.query.coordinatorid;
+
+    if (!coordinatorId) {
+        return res.status(400).send('Coordinator ID is required.');
+    }
+
+    // Step 1: Fetch the coordinator's department
+    const coordinatorDepartmentQuery = `
+        SELECT department
+        FROM depcorlogin
+        WHERE coordinatorid = ?;
+    `;
+
+    db.query(coordinatorDepartmentQuery, [coordinatorId], (err, coordinatorResults) => {
+        if (err) {
+            console.error('Error fetching coordinator department:', err);
+            return res.status(500).send('Error fetching coordinator department.');
+        }
+
+        if (coordinatorResults.length === 0) {
+            return res.status(404).send('Coordinator not found.');
+        }
+
+        const coordinatorDepartment = coordinatorResults[0].department;
+
+        // Step 2: Fetch seed money applications where faculty department matches coordinator's department
+        const seedMoneyQuery = `
+            SELECT s.*
+            FROM seedmoney s
+            JOIN faculty f ON s.faculty_id = f.faculty_id
+            WHERE f.department = ?;
+        `;
+
+        db.query(seedMoneyQuery, [coordinatorDepartment], (err, seedMoneyResults) => {
+            if (err) {
+                console.error('Error fetching seed money applications:', err);
+                return res.status(500).send('Error fetching seed money applications.');
+            }
+
+            if (seedMoneyResults.length === 0) {
+                return res.status(404).send('No seed money applications found for this department.');
+            }
+
+            // ✅ Ensure `proof` is correctly formatted
+           // Ensure proof is parsed correctly
+seedMoneyResults.forEach(app => {
+    if (typeof app.proof === 'string') {  
+        try {
+            app.proof = JSON.parse(app.proof).map(file => file.replace(/\\/g, '/'));
+        } catch (error) {
+            console.error('Error parsing proof JSON:', error);
+            app.proof = [];
+        }
+    } else if (!Array.isArray(app.proof)) {
+        app.proof = [];
+    }
+});
+
+            res.json(seedMoneyResults);
+        });
+    });
+});
+
+
+app.get('/getAllFundedProjects', (req, res) => {
+    const coordinatorId = req.query.coordinatorid;
+
+    if (!coordinatorId) {
+        return res.status(400).json({ error: 'Coordinator ID is required.' });
+    }
+
+    const coordinatorDepartmentQuery = `SELECT department FROM depcorlogin WHERE coordinatorid = ?`;
+
+    db.query(coordinatorDepartmentQuery, [coordinatorId], (err, results) => {
+        if (err) {
+            console.error('DB Error:', err);
+            return res.status(500).json({ error: 'Database error.' });
+        }
+
+        if (results.length === 0) {
+            console.log(`Coordinator ID "${coordinatorId}" not found.`);
+            return res.status(404).json({ error: 'Coordinator not found.' });
+        }
+
+        const coordinatorDepartment = results[0].department;
+
+        // ✅ Fix: Move department condition to WHERE clause
+        const fundedProjectsQuery = `
+            SELECT fp.*
+            FROM fundedprojects fp
+            JOIN faculty f ON fp.faculty_id = f.faculty_id
+            WHERE f.department = ?;
+        `;
+
+        db.query(fundedProjectsQuery, [coordinatorDepartment], (err, projectsResults) => {
+            if (err) {
+                console.error('Error fetching funded projects:', err);
+                return res.status(500).json({ error: 'Error fetching funded projects.' });
+            }
+
+
+            if (projectsResults.length === 0) {
+                console.log(`No funded projects found for department: ${coordinatorDepartment}`);
+                return res.status(404).json({ error: 'No funded projects applied for approval.' });
+            }
+
+            res.json(projectsResults);
+        });
+    });
+});
+
+app.get('/getConsultancyByCoordinator', (req, res) => {
+    const coordinatorId = req.query.coordinatorid;
+
+    if (!coordinatorId) {
+        return res.status(400).json({ error: 'Coordinator ID is required.' });
+    }
+
+    const coordinatorDepartmentQuery = `SELECT department FROM depcorlogin WHERE coordinatorid = ?`;
+
+    db.query(coordinatorDepartmentQuery, [coordinatorId], (err, results) => {
+        if (err) {
+            console.error('DB Error:', err);
+            return res.status(500).json({ error: 'Database error.' });
+        }
+
+        if (results.length === 0) {
+            console.log(`Coordinator ID "${coordinatorId}" not found.`);
+            return res.status(404).json({ error: 'Coordinator not found.' });
+        }
+
+        const coordinatorDepartment = results[0].department;
+
+        // ✅ Fetch consultancy projects related to the coordinator's department
+        const consultancyProjectsQuery = `
+           SELECT cp.*
+            FROM consultancy_projects cp
+            JOIN faculty f ON cp.faculty_id = f.faculty_id
+            WHERE f.department = ?;
+        `;
+
+        db.query(consultancyProjectsQuery, [coordinatorDepartment], (err, projectsResults) => {
+            if (err) {
+                console.error('Error fetching consultancy projects:', err);
+                return res.status(500).json({ error: 'Error fetching consultancy projects.' });
+            }
+
+            if (projectsResults.length === 0) {
+                console.log(`No consultancy projects found for department: ${coordinatorDepartment}`);
+                return res.status(404).json({ error: 'No consultancy projects applied for approval.' });
+            }
+
+            res.json(projectsResults);
+        });
+    });
+});
+
+app.get('/getScholarsByCoordinator/:coordinatorid', (req, res) => {
+    const coordinatorId = req.params.coordinatorid;  // Change from req.query to req.params
+
+    if (!coordinatorId) {
+        return res.status(400).json({ error: 'Coordinator ID is required.' });
+    }
+
+    const coordinatorDepartmentQuery = `SELECT department FROM depcorlogin WHERE coordinatorid = ?`;
+
+    db.query(coordinatorDepartmentQuery, [coordinatorId], (err, results) => {
+        if (err) {
+            console.error('DB Error:', err);
+            return res.status(500).json({ error: 'Database error.' });
+        }
+
+        if (results.length === 0) {
+            console.log(`Coordinator ID "${coordinatorId}" not found.`);
+            return res.status(404).json({ error: 'Coordinator not found.' });
+        }
+
+        const coordinatorDepartment = results[0].department;
+
+        const scholarsQuery = `
+            SELECT rs.* 
+            FROM research rs
+            JOIN faculty f ON rs.faculty_id = f.faculty_id
+            WHERE f.department = ?;
+        `;
+
+        db.query(scholarsQuery, [coordinatorDepartment], (err, scholarsResults) => {
+            if (err) {
+                console.error('Error fetching research scholars:', err);
+                return res.status(500).json({ error: 'Error fetching research scholars.' });
+            }
+
+            if (scholarsResults.length === 0) {
+                console.log(`No research scholars found for department: ${coordinatorDepartment}`);
+                return res.status(404).json({ error: 'No research scholars found.' });
+            }
+
+            res.json(scholarsResults);
+        });
+    });
+});
+
+app.get('/getProposalsByCoordinator/:coordinatorid', (req, res) => {
+    const coordinatorId = req.params.coordinatorid;
+
+    if (!coordinatorId) {
+        return res.status(400).json({ error: 'Coordinator ID is required.' });
+    }
+
+    // Step 1: Get the department of the coordinator
+    const coordinatorDepartmentQuery = `
+        SELECT department 
+        FROM depcorlogin 
+        WHERE coordinatorid = ?;
+    `;
+
+    db.query(coordinatorDepartmentQuery, [coordinatorId], (err, results) => {
+        if (err) {
+            console.error('Database Error:', err);
+            return res.status(500).json({ error: 'Database error.' });
+        }
+
+        if (results.length === 0) {
+            console.log(`Coordinator ID "${coordinatorId}" not found.`);
+            return res.status(404).json({ error: 'Coordinator not found.' });
+        }
+
+        const coordinatorDepartment = results[0].department;
+       
+
+        // Step 2: Fetch proposals submitted by faculty in the department
+        const proposalsQuery = `
+            SELECT p.* 
+            FROM proposals p
+            JOIN faculty f ON p.faculty_id = f.faculty_id
+            WHERE f.department = ?;
+        `;
+
+        db.query(proposalsQuery, [coordinatorDepartment], (err, proposalsResults) => {
+            if (err) {
+                console.error('Error fetching proposals:', err);
+                return res.status(500).json({ error: 'Error fetching proposals.' });
+            }
+
+            if (proposalsResults.length === 0) {
+                console.log(`No proposals found for department: ${coordinatorDepartment}`);
+                return res.status(404).json({ error: 'No proposals found.' });
+            }
+            res.json(proposalsResults);
+        });
+    });
+});
+
+
 app.post("/institute_coordinator_login", (req, res) => {
     const { coordinatorid, password } = req.body;
   
@@ -1446,6 +1779,117 @@ app.put("/rejectPatentbyInst/:patent_id", (req, res) => {
             return res.status(404).json({ success: false, message: "Patent not found" });
         }
         res.json({ success: true, message: "Patent rejected successfully" });
+    });
+});
+
+
+app.get('/getAllSeedMoneyApplications', (req, res) => {
+    const query = `
+        SELECT *
+        FROM seedmoney;
+    `;
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Database Error:', err);
+            return res.status(500).json({ error: 'Database error.' });
+        }
+
+        if (results.length === 0) {
+            return res.status(404).json({ error: 'No seed money applications found.' });
+        }
+
+        // Ensure students field is parsed as an array
+        const formattedResults = results.map(app => ({
+            ...app,
+            students: typeof app.students === "string" ? JSON.parse(app.students) : app.students
+        }));
+
+        res.json(formattedResults);
+    });
+});
+app.get('/getAllFundedProjectsInstitute', (req, res) => {
+    const query = `SELECT * FROM fundedprojects;`; // Make sure your table name is correct
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Database Error:', err);
+            return res.status(500).json({ error: 'Database error.' });
+        }
+
+        // Ensure results is always an array
+        if (!Array.isArray(results)) {
+            return res.status(500).json({ error: 'Unexpected database response.' });
+        }
+
+        // Parse JSON fields properly if they exist
+        const formattedResults = results.map(proj => ({
+            ...proj,
+            students: proj.students ? JSON.parse(proj.students) : []  // Handle JSON parsing safely
+        }));
+
+        res.json(formattedResults);
+    });
+});
+
+app.get('/getAllConsultancyProjectsInstitute', (req, res) => {
+    const query = `SELECT * FROM consultancy_projects;`; // Ensure correct table name
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Database Error:', err);
+            return res.status(500).json({ error: 'Database error.' });
+        }
+
+        // Ensure results is always an array
+        if (!Array.isArray(results)) {
+            return res.status(500).json({ error: 'Unexpected database response.' });
+        }
+
+        // Safely parse JSON fields if they are strings
+        const formattedResults = results.map(proj => ({
+            ...proj,
+            faculties: (typeof proj.faculties === "string") ? JSON.parse(proj.faculties) : proj.faculties,  
+            report: (typeof proj.report === "string") ? JSON.parse(proj.report) : proj.report 
+        }));
+
+        res.json(formattedResults);
+    });
+});
+
+app.get("/getAllScholarsInstitute", (req, res) => {
+    const query = `SELECT * FROM research;`; // Ensure correct table name
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error("Database Error:", err);
+            return res.status(500).json({ error: "Database error." });
+        }
+
+        if (!Array.isArray(results)) {
+            return res.status(500).json({ error: "Unexpected database response." });
+        }
+
+        // Directly return the results without JSON parsing
+        res.json(results);
+    });
+});
+
+app.get("/getProposalsByCoordinator", (req, res) => {
+    const query = `SELECT * FROM proposals;`; // Ensure correct table name
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error("Database Error:", err);
+            return res.status(500).json({ error: "Database error." });
+        }
+
+        if (!Array.isArray(results)) {
+            return res.status(500).json({ error: "Unexpected database response." });
+        }
+
+        // Send the retrieved proposals as a JSON response
+        res.json(results);
     });
 });
 

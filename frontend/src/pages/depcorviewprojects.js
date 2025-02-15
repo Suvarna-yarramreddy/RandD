@@ -1,19 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 
-const FundedProjectsPage = () => {
+const CorFundedProjects = () => {
     const [projects, setProjects] = useState([]);
     const [visibleDetails, setVisibleDetails] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
 
-    const faculty_id = sessionStorage.getItem("faculty_id");
-    const navigate = useNavigate();
-
+    const coordinatorId = sessionStorage.getItem("coordinatorid");
     useEffect(() => {
         const fetchFundedProjects = async () => {
             try {
-                const response = await fetch(`http://localhost:5000/getFundedProjects/${faculty_id}`);
+                const response = await fetch(`http://localhost:5000/getAllFundedProjects?coordinatorid=${coordinatorId}`);
                 if (!response.ok) {
                     const errorText = await response.text();
                     throw new Error(errorText || 'Failed to fetch funded projects');
@@ -21,40 +16,31 @@ const FundedProjectsPage = () => {
                 const data = await response.json();
                 setProjects(data);
             } catch (err) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
+                console.log(err.message);
+            } 
         };
-
-        fetchFundedProjects();
-    }, [faculty_id]);
+    
+        if (coordinatorId) {
+            fetchFundedProjects();
+        }
+    }, [coordinatorId]);
+    
 
     const handleToggleDetails = (id) => {
         setVisibleDetails(visibleDetails === id ? null : id);
     };
 
-    const handleEdit = (project) => {
-        navigate('/editexternal', { state: { project } });
-    };
-
-    if (loading) {
-        return <div className="text-center">Loading...</div>;
-    }
-
-    if (error) {
-        return <div className="text-center text-danger">{error}</div>;
-    }
 
     return (
         <div className="container mt-2">
-            <h2 className="text-center text-dark mb-4">Externally Funded Projects</h2>
+            <h2 className="text-center text-dark mb-4">Department-Wise Externally Funded Projects</h2>
             {projects.length > 0 ? (
                 <div className="row">
                     {projects.map((proj) => (
                         <div className="col-md-6 mb-4" key={proj.id}>
                             <div className="card">
-                                <div className="card-body flex-column">
+                                <div className="card-body d-flex flex-column">
+                                    <div className="justify-content-between align-items-center mb-3">
                                         <h5 className="card-title">
                                             Project Title:&nbsp;
                                             <a
@@ -66,25 +52,19 @@ const FundedProjectsPage = () => {
                                                 {proj.title}
                                             </a>
                                         </h5>
-                                        
                                         <div className="text-right">
                                             <strong>Status:</strong>
                                             <span className="text-dark ms-2">{proj.status}</span>
-
                                             {proj.status === 'Rejected' && proj.rejection_reason && (
                                                 <div className="mt-2">
                                                     <strong>Reason:</strong> {proj.rejection_reason}
                                                 </div>
                                             )}
-
-                                            {/* Edit Button for Every Project */}
-                                            
-                                        
+                                        </div>
                                     </div>
                                     {visibleDetails === proj.id && (
-                                        <div className="overflow-auto" style={{ maxHeight: '200px' }}>
-                                            <div className="card-details">
-                                             {proj.financialYear && <p><strong>Financial Year:</strong> {proj.financialYear}</p>}
+                                        <div className="card-details overflow-auto" style={{ maxHeight: '250px' }}>
+                                            {proj.financialYear && <p><strong>Financial Year:</strong> {proj.financialYear}</p>}
                                             {proj.applicationNumber && <p><strong>Application Number:</strong> {proj.applicationNumber}</p>}
                                             {proj.agency && <p><strong>Funding Agency:</strong> {proj.agency}</p>}
                                             {proj.scheme && <p><strong>Scheme:</strong> {proj.scheme}</p>}
@@ -103,12 +83,9 @@ const FundedProjectsPage = () => {
                                             {proj.amountApplied && <p><strong>Amount Applied:</strong> ₹{proj.amountApplied}</p>}
                                             {proj.amountReceived && <p><strong>Amount Received:</strong> ₹{proj.amountReceived}</p>}
                                             {proj.amountSanctioned && <p><strong>Amount Sanctioned:</strong> ₹{proj.amountSanctioned}</p>}
-                                            {proj.totalExpenditure && <p><strong>Total Expenditure Of The Project:</strong> ₹{proj.totalExpenditure}</p>}
-                                        </div>
+                                            {proj.totalExpenditure && <p><strong>Total Expenditure:</strong> ₹{proj.totalExpenditure}</p>}
                                         </div>
                                     )}
-                                
-                                <button className="btn btn-primary mt-2" onClick={() => handleEdit(proj)}>Edit</button>
                                 </div>
                             </div>
                         </div>
@@ -121,4 +98,4 @@ const FundedProjectsPage = () => {
     );
 };
 
-export default FundedProjectsPage;
+export default CorFundedProjects;

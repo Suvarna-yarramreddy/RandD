@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const Viewscholars = () => {
+const ViewScholars = () => {
     const [scholars, setScholars] = useState([]);
     const [visibleDetails, setVisibleDetails] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const navigate = useNavigate();
 
     const faculty_id = sessionStorage.getItem("faculty_id");
 
@@ -32,6 +34,10 @@ const Viewscholars = () => {
         setVisibleDetails(visibleDetails === id ? null : id);
     };
 
+    const handleEditClick = (scholar) => {
+        navigate('/editscholar', { state: { scholar } });
+    };
+
     if (loading) {
         return <div className="text-center">Loading...</div>;
     }
@@ -49,7 +55,7 @@ const Viewscholars = () => {
                         <div className="col-md-6 mb-4" key={scholar.id}>
                             <div className="card">
                                 <div className="card-body d-flex flex-column">
-                                    <div className="d-flex justify-content-between align-items-center mb-3">
+                                    <div className="justify-content-between align-items-center mb-3">
                                         <h5 className="card-title">
                                             Title of Work:&nbsp;
                                             <a
@@ -61,33 +67,51 @@ const Viewscholars = () => {
                                                 {scholar.workTitle}
                                             </a>
                                         </h5>
+                                        <div className="text-right">
+                                            <button className="btn btn-warning mt-2" onClick={() => handleEditClick(scholar)}>
+                                                Edit
+                                            </button>
+                                        </div>
                                     </div>
                                     {visibleDetails === scholar.id && (
-                                        <div className="card-details overflow-auto" style={{ maxHeight: '250px' }}>
-                                            {scholar.guideName && <p><strong>Guide Name:</strong> {scholar.guideName}</p>}
-                                            {scholar.guideDepartment && <p><strong>Guide Department:</strong> {scholar.guideDepartment}</p>}
-                                            {scholar.scholarName && <p><strong>Scholar Name:</strong> {scholar.scholarName}</p>}
-                                            {scholar.scholarDepartment && <p><strong>Scholar Department:</strong> {scholar.scholarDepartment}</p>}
-                                            {scholar.admissionDate && <p><strong>Admission Date:</strong> {scholar.admissionDate}</p>}
-                                            {scholar.university && <p><strong>University:</strong> {scholar.university}</p>}
-                                            {scholar.admissionStatus && <p><strong>Admission Status:</strong> {scholar.admissionStatus}</p>}
-                                            {scholar.awardDate && <p><strong>Award Date:</strong> {scholar.awardDate}</p>}
-                                            {scholar.fellowship && <p><strong>Fellowship:</strong> {scholar.fellowship}</p>}
-                                            {scholar.admissionLetter && (
-                                                <p><strong>Admission Letter:</strong>
-                                                <a href={`http://localhost:5000/${scholar.admissionLetter}`} target="_blank" rel="noopener noreferrer">View</a>
-                                                </p>
-                                            )}
-                                           {scholar.guideAllotmentLetter && (
-                                            <p><strong>Guide Allotment Letter:</strong>
-                                            <a href={`http://localhost:5000/${scholar.guideAllotmentLetter}`} target="_blank" rel="noopener noreferrer">View</a>
-                                            </p>
-                                             )}
-                                            {scholar.completionProceedings && (
-                                             <p><strong>Completion Proceedings:</strong>
-                                            <a href={`http://localhost:5000/${scholar.completionProceedings}`} target="_blank" rel="noopener noreferrer">View</a>
-                                            </p>
-                                           )}
+                                        <div className="card-details overflow-auto" style={{ maxHeight: '200px' }}>
+                                           {scholar.guideName && <p><strong>Guide Name:</strong> {scholar.guideName}</p>}
+{scholar.guideDepartment && <p><strong>Guide Department:</strong> {scholar.guideDepartment}</p>}
+{scholar.scholarName && <p><strong>Scholar Name:</strong> {scholar.scholarName}</p>}
+{scholar.scholarDepartment && <p><strong>Scholar Department:</strong> {scholar.scholarDepartment}</p>}
+{scholar.admissionDate && <p><strong>Admission Date:</strong> {scholar.admissionDate.split('T')[0]}</p>}
+{scholar.university && <p><strong>University:</strong> {scholar.university}</p>}
+{scholar.workTitle && <p><strong>Work Title:</strong> {scholar.workTitle}</p>}
+{scholar.admissionStatus && <p><strong>Admission Status:</strong> {scholar.admissionStatus}</p>}
+{scholar.awardDate && <p><strong>Award Date:</strong> {scholar.awardDate.split('T')[0]}</p>}
+{scholar.fellowship && <p><strong>Fellowship:</strong> {scholar.fellowship}</p>}
+
+{/* Display uploaded documents if available */}
+{scholar.admissionLetter && (
+    <p>
+        <strong>Admission Letter:</strong>&nbsp;
+        <a href={`http://localhost:5000/${scholar.admissionLetter}`} target="_blank" rel="noopener noreferrer">
+            View Admission Letter
+        </a>
+    </p>
+)}
+{scholar.guideAllotmentLetter && (
+    <p>
+        <strong>Guide Allotment Letter:</strong>&nbsp;
+        <a href={`http://localhost:5000/${scholar.guideAllotmentLetter}`} target="_blank" rel="noopener noreferrer">
+            View Guide Allotment Letter
+        </a>
+    </p>
+)}
+{scholar.completionProceedings && (
+    <p>
+        <strong>Completion Proceedings:</strong>&nbsp;
+        <a href={`http://localhost:5000/${scholar.completionProceedings}`} target="_blank" rel="noopener noreferrer">
+            View Completion Proceedings
+        </a>
+    </p>
+)}
+
                                         </div>
                                     )}
                                 </div>
@@ -102,4 +126,4 @@ const Viewscholars = () => {
     );
 };
 
-export default Viewscholars;
+export default ViewScholars;

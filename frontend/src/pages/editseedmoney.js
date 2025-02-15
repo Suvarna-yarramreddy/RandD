@@ -19,6 +19,20 @@ const EditSeedMoney = () => {
         students: [],
         proof: []
     });
+    const [deletedFiles, setDeletedFiles] = useState([]);
+
+const handleFileDelete = (index) => {
+    const updatedProofs = [...formData.proof];
+    const removedFile = updatedProofs.splice(index, 1)[0];
+
+    // Track deleted files
+    setDeletedFiles(prevDeleted => [...prevDeleted, removedFile]);
+
+    setFormData(prevState => ({
+        ...prevState,
+        proof: updatedProofs
+    }));
+};
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -31,16 +45,7 @@ const EditSeedMoney = () => {
     const handleFileChange = (e) => {
         setSelectedFiles([...selectedFiles, ...e.target.files]);
     };
-    
 
-    const handleFileDelete = (index) => {
-        const updatedProofs = [...formData.proof];
-        updatedProofs.splice(index, 1);
-        setFormData(prevState => ({
-            ...prevState,
-            proof: updatedProofs
-        }));
-    };
 
     const handleStudentChange = (index, e) => {
         const { name, value } = e.target;
@@ -63,35 +68,38 @@ const EditSeedMoney = () => {
             }
         });
     
-        // Append students as JSON
+        // Handle amountReceived as null if nothing is provided
+        if (!formData.amountReceived) {
+            data.append("amountReceived", null);
+        } else {
+            data.append("amountReceived", formData.amountReceived);
+        }
+    
+        // ✅ Append students safely
         data.append("students", JSON.stringify(formData.students));
     
-        // Append existing proof file names (if any)
-        formData.proof.forEach(file => {
-            if (typeof file === "string") {  // If it's a stored file name
-                data.append("existingProofs", file);
-            }
-        });
+        // ✅ Append deleted proofs safely
+        data.append("deletedProofs", JSON.stringify(deletedFiles));
     
-        // Append newly selected files
+        // ✅ Append new proof files
         selectedFiles.forEach(file => {
             data.append("proof", file);
         });
     
         try {
             const response = await fetch(`http://localhost:5000/updateSeedMoney/${application.id}`, {
-                method: 'PUT',
+                method: "PUT",
                 body: data,
             });
     
             if (!response.ok) {
-                throw new Error('Failed to update application');
+                throw new Error("Failed to update application");
             }
     
-            alert('Application updated successfully');
-            navigate('/viewseedmoney');
+            alert("Application updated successfully");
+            navigate("/viewseedmoney");
         } catch (error) {
-            console.error('Error updating application:', error);
+            console.error("Error updating application:", error);
         }
     };
     
@@ -120,9 +128,9 @@ const EditSeedMoney = () => {
                         <div className="col-md-6 mb-3" key={index}>
                             <label className="form-label"><strong>{field.label}</strong></label>
                             {field.type === "textarea" ? (
-                                <textarea name={field.name} className="form-control" value={formData[field.name] || ""} onChange={handleChange} required />
+                                <textarea name={field.name} className="form-control" value={formData[field.name] || ""} onChange={handleChange}  />
                             ) : (
-                                <input type={field.type} name={field.name} className="form-control" value={formData[field.name] || ""} onChange={handleChange} required />
+                                <input type={field.type} name={field.name} className="form-control" value={formData[field.name] || ""} onChange={handleChange}/>
                             )}
                         </div>
                     ))}
@@ -144,7 +152,6 @@ const EditSeedMoney = () => {
                                             placeholder="Student Name"
                                             value={student.name || ""}
                                             onChange={(e) => handleStudentChange(index, e)}
-                                            required
                                         />
                                         <input
                                             type="text"
@@ -153,7 +160,7 @@ const EditSeedMoney = () => {
                                             placeholder="Registration Number"
                                             value={student.registration || ""}
                                             onChange={(e) => handleStudentChange(index, e)}
-                                            required
+                                        
                                         />
                                     </div>
                                 </div>
@@ -184,6 +191,9 @@ const EditSeedMoney = () => {
                 </div>
 
                 <button type="submit" className="btn btn-success">Update</button>
+                <button type="button" className="btn btn-secondary ms-2" onClick={() => navigate('/viewseedmoney')}>
+                        Cancel
+                    </button>
             </form>
         </div>
     );
