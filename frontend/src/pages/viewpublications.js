@@ -49,6 +49,7 @@ const PublicationsPage = () => {
                             <div className="card">
                                 <div className="card-body d-flex flex-column">
                                     <div className=" justify-content-between align-items-center mb-3">
+                                    <div className='d-flex justify-content-between align-items-center mb-3'>
                                         <h5 className="card-title">
                                             Cite As:&nbsp;
                                             <a
@@ -59,6 +60,23 @@ const PublicationsPage = () => {
                                                 {pub.citeAs}
                                             </a>
                                         </h5>
+                                        {pub.status === 'Rejected by Department R&D Coordinator' && (
+                                                <button
+                                                    className="btn btn-warning mt-2"
+                                                    onClick={() => handleEditClick(pub)} // Handle edit button click
+                                                >
+                                                    Edit
+                                                </button>
+                                            )}
+                                             {pub.status === 'Rejected by Institute R&D Coordinator' && (
+                                                <button
+                                                    className="btn btn-warning mt-2"
+                                                    onClick={() => handleEditClick(pub)} // Handle edit button click
+                                                >
+                                                    Edit
+                                                </button>
+                                            )}
+                                        </div>
                                         <div className="text-right">
                                             <strong>Status:</strong>
                                             <span className="text-dark ms-2">{pub.status}</span>
@@ -71,27 +89,14 @@ const PublicationsPage = () => {
                                             )}
                                             
                                             {/* Show "Edit" button only for rejected publications */}
-                                            {pub.status === 'Rejected by Department R&D Coordinator' && (
-                                                <button
-                                                    className="btn btn-warning mt-2"
-                                                    onClick={() => handleEditClick(pub)} // Handle edit button click
-                                                >
-                                                    Edit
-                                                </button>
-                                            )}
+                                            
                                              {pub.status === 'Rejected by Institute R&D Coordinator' && pub.rejection_reason && (
                                                 <div className="mt-2">
                                                     <strong>Reason:</strong> {pub.rejection_reason}
                                                 </div>
                                             )}
-                                            {pub.status === 'Rejected by Institute R&D Coordinator' && (
-                                                <button
-                                                    className="btn btn-warning mt-2"
-                                                    onClick={() => handleEditClick(pub)} // Handle edit button click
-                                                >
-                                                    Edit
-                                                </button>
-                                            )}
+                                            
+                                           
                                         </div>
                                     </div>
 

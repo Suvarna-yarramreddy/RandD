@@ -45,6 +45,7 @@ const PatentsPage = () => {
                             <div className="card">
                                 <div className="card-body d-flex flex-column">
                                 <div className=" justify-content-between align-items-center mb-3">
+                                <div className='d-flex justify-content-between align-items-center mb-3'>
                                     <h5 className="card-title">
                                         Title of Invention:&nbsp;
                                         <a
@@ -56,6 +57,23 @@ const PatentsPage = () => {
                                             {pat.inventionTitle}
                                         </a>
                                     </h5>
+                                    {pat.status === 'Rejected by Department R&D Coordinator' && (
+                                                <button
+                                                    className="btn btn-warning mt-2"
+                                                    onClick={() => handleEditClick(pat)} // Handle edit button click
+                                                >
+                                                    Edit
+                                                </button>
+                                            )}
+                                            {pat.status === 'Rejected by Institute R&D Coordinator' && (
+                                                <button
+                                                    className="btn btn-warning mt-2"
+                                                    onClick={() => handleEditClick(pat)} // Handle edit button click
+                                                >
+                                                    Edit
+                                                </button>
+                                            )}
+                                            </div>
                                     <div className="text-right">
                                             <strong>Status:</strong>
                                             <span className="text-dark ms-2">{pat.status}</span>
@@ -68,27 +86,13 @@ const PatentsPage = () => {
                                             )}
                                             
                                             {/* Show "Edit" button only for rejected publications */}
-                                            {pat.status === 'Rejected by Department R&D Coordinator' && (
-                                                <button
-                                                    className="btn btn-warning mt-2"
-                                                    onClick={() => handleEditClick(pat)} // Handle edit button click
-                                                >
-                                                    Edit
-                                                </button>
-                                            )}
+                                            
                                             {pat.status === 'Rejected by Institute R&D Coordinator' && pat.rejection_reason && (
                                                 <div className="mt-2">
                                                     <strong>Reason:</strong> {pat.rejection_reason}
                                                 </div>
                                             )}
-                                            {pat.status === 'Rejected by Institute R&D Coordinator' && (
-                                                <button
-                                                    className="btn btn-warning mt-2"
-                                                    onClick={() => handleEditClick(pat)} // Handle edit button click
-                                                >
-                                                    Edit
-                                                </button>
-                                            )}
+                                            
                                         </div>
                                         </div>
                                     {visibleDetails === pat.patent_id && (

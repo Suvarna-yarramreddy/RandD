@@ -55,6 +55,7 @@ const FundedProjectsPage = () => {
                         <div className="col-md-6 mb-4" key={proj.id}>
                             <div className="card">
                                 <div className="card-body flex-column">
+                                <div className='d-flex justify-content-between align-items-center mb-3'>
                                         <h5 className="card-title">
                                             Project Title:&nbsp;
                                             <a
@@ -66,6 +67,8 @@ const FundedProjectsPage = () => {
                                                 {proj.title}
                                             </a>
                                         </h5>
+                                        <button className="btn btn-warning mt-2" onClick={() => handleEdit(proj)}>Edit</button>
+                                        </div>
                                         
                                         <div className="text-right">
                                             <strong>Status:</strong>
@@ -108,7 +111,7 @@ const FundedProjectsPage = () => {
                                         </div>
                                     )}
                                 
-                                <button className="btn btn-primary mt-2" onClick={() => handleEdit(proj)}>Edit</button>
+                                
                                 </div>
                             </div>
                         </div>

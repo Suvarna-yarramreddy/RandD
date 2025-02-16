@@ -56,6 +56,7 @@ const ViewScholars = () => {
                             <div className="card">
                                 <div className="card-body d-flex flex-column">
                                     <div className="justify-content-between align-items-center mb-3">
+                                    <div className='d-flex justify-content-between align-items-center mb-3'>
                                         <h5 className="card-title">
                                             Title of Work:&nbsp;
                                             <a
@@ -67,50 +68,51 @@ const ViewScholars = () => {
                                                 {scholar.workTitle}
                                             </a>
                                         </h5>
-                                        <div className="text-right">
                                             <button className="btn btn-warning mt-2" onClick={() => handleEditClick(scholar)}>
                                                 Edit
                                             </button>
+                                
                                         </div>
+                                        
                                     </div>
                                     {visibleDetails === scholar.id && (
                                         <div className="card-details overflow-auto" style={{ maxHeight: '200px' }}>
                                            {scholar.guideName && <p><strong>Guide Name:</strong> {scholar.guideName}</p>}
-{scholar.guideDepartment && <p><strong>Guide Department:</strong> {scholar.guideDepartment}</p>}
-{scholar.scholarName && <p><strong>Scholar Name:</strong> {scholar.scholarName}</p>}
-{scholar.scholarDepartment && <p><strong>Scholar Department:</strong> {scholar.scholarDepartment}</p>}
-{scholar.admissionDate && <p><strong>Admission Date:</strong> {scholar.admissionDate.split('T')[0]}</p>}
-{scholar.university && <p><strong>University:</strong> {scholar.university}</p>}
-{scholar.workTitle && <p><strong>Work Title:</strong> {scholar.workTitle}</p>}
-{scholar.admissionStatus && <p><strong>Admission Status:</strong> {scholar.admissionStatus}</p>}
-{scholar.awardDate && <p><strong>Award Date:</strong> {scholar.awardDate.split('T')[0]}</p>}
-{scholar.fellowship && <p><strong>Fellowship:</strong> {scholar.fellowship}</p>}
+                                            {scholar.guideDepartment && <p><strong>Guide Department:</strong> {scholar.guideDepartment}</p>}
+                                            {scholar.scholarName && <p><strong>Scholar Name:</strong> {scholar.scholarName}</p>}
+                                            {scholar.scholarDepartment && <p><strong>Scholar Department:</strong> {scholar.scholarDepartment}</p>}
+                                            {scholar.admissionDate && <p><strong>Admission Date:</strong> {scholar.admissionDate.split('T')[0]}</p>}
+                                            {scholar.university && <p><strong>University:</strong> {scholar.university}</p>}
+                                            {scholar.workTitle && <p><strong>Work Title:</strong> {scholar.workTitle}</p>}
+                                            {scholar.admissionStatus && <p><strong>Admission Status:</strong> {scholar.admissionStatus}</p>}
+                                            {scholar.awardDate && <p><strong>Award Date:</strong> {scholar.awardDate.split('T')[0]}</p>}
+                                            {scholar.fellowship && <p><strong>Fellowship:</strong> {scholar.fellowship}</p>}
 
-{/* Display uploaded documents if available */}
-{scholar.admissionLetter && (
-    <p>
-        <strong>Admission Letter:</strong>&nbsp;
-        <a href={`http://localhost:5000/${scholar.admissionLetter}`} target="_blank" rel="noopener noreferrer">
-            View Admission Letter
-        </a>
-    </p>
-)}
-{scholar.guideAllotmentLetter && (
-    <p>
-        <strong>Guide Allotment Letter:</strong>&nbsp;
-        <a href={`http://localhost:5000/${scholar.guideAllotmentLetter}`} target="_blank" rel="noopener noreferrer">
-            View Guide Allotment Letter
-        </a>
-    </p>
-)}
-{scholar.completionProceedings && (
-    <p>
-        <strong>Completion Proceedings:</strong>&nbsp;
-        <a href={`http://localhost:5000/${scholar.completionProceedings}`} target="_blank" rel="noopener noreferrer">
-            View Completion Proceedings
-        </a>
-    </p>
-)}
+                                            {/* Display uploaded documents if available */}
+                                            {scholar.admissionLetter && (
+                                                <p>
+                                                    <strong>Admission Letter:</strong>&nbsp;
+                                                    <a href={`http://localhost:5000/${scholar.admissionLetter}`} target="_blank" rel="noopener noreferrer">
+                                                        View Admission Letter
+                                                    </a>
+                                                </p>
+                                            )}
+                                            {scholar.guideAllotmentLetter && (
+                                                <p>
+                                                    <strong>Guide Allotment Letter:</strong>&nbsp;
+                                                    <a href={`http://localhost:5000/${scholar.guideAllotmentLetter}`} target="_blank" rel="noopener noreferrer">
+                                                        View Guide Allotment Letter
+                                                    </a>
+                                                </p>
+                                            )}
+                                            {scholar.completionProceedings && (
+                                                <p>
+                                                    <strong>Completion Proceedings:</strong>&nbsp;
+                                                    <a href={`http://localhost:5000/${scholar.completionProceedings}`} target="_blank" rel="noopener noreferrer">
+                                                        View Completion Proceedings
+                                                    </a>
+                                                </p>
+                                            )}
 
                                         </div>
                                     )}

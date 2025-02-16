@@ -40,6 +40,7 @@ const ConsultancyProjectsPage = () => {
                         <div className="col-md-6 mb-4" key={project.consultancy_id}>
                             <div className="card">
                                 <div className="card-body flex-column">
+                                <div className='d-flex justify-content-between align-items-center mb-3'>
                                     <h5 className="card-title">
                                         <strong>Title: </strong>
                                         <a
@@ -50,6 +51,13 @@ const ConsultancyProjectsPage = () => {
                                             {project.titleofconsultancy}
                                         </a>
                                     </h5>
+                                    <button 
+                                        className="btn btn-warning mt-2" 
+                                        onClick={() => handleEdit(project)}
+                                    >
+                                        Edit
+                                    </button>
+                                    </div>
                                     {visibleDetails === project.consultancy_id && (
                                         <div className="overflow-auto" style={{ maxHeight: '250px' }}>
                                             <div className="card-details">
@@ -135,12 +143,7 @@ const ConsultancyProjectsPage = () => {
                                             </div>
                                         </div>
                                     )}
-                                    <button 
-                                        className="btn btn-warning mt-2" 
-                                        onClick={() => handleEdit(project)}
-                                    >
-                                        Edit
-                                    </button>
+                                    
                                 </div>
                             </div>
                         </div>

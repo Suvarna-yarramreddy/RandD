@@ -48,36 +48,39 @@ const Loginpage = () => {
 
   return (
     <div className="container mt-3" style={{ maxWidth: "500px" }}>
-      <h1 className="text-center mb-4">Faculty Login</h1>
-      <form onSubmit={handleSubmit}>
-        <div className="mb-3">
-          <label className="form-label">Faculty ID:</label>
-          <input
-            type="text"
-            className="form-control"
-            name="faculty_id"
-            value={loginData.faculty_id}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="mb-3">
-          <label className="form-label">Password:</label>
-          <input
-            type="password"
-            className="form-control"
-            name="password1"
-            value={loginData.password1}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <button type="submit" className="btn btn-primary w-100">Login</button>
-        {errorMessage && (
-          <div className="alert alert-danger mt-3">{errorMessage}</div>
-        )}
-      </form>
-    </div>
+        <h1 className="text-center mb-4"><b>Faculty Login</b></h1>
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="form-label">Faculty ID:</label>
+            <input
+              type="text"
+              className="form-control"
+              name="faculty_id"
+              value={loginData.faculty_id}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="mb-5">
+            <label className="form-label">Password:</label>
+            <input
+              type="password"
+              className="form-control"
+              name="password1"
+              value={loginData.password1}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="d-flex justify-content-center">
+            <button type="submit" className="btn btn-primary " style={{ width: "40%" }}>Login</button>
+          </div>
+          {errorMessage && (
+            <div className="alert alert-danger mt-3">{errorMessage}</div>
+          )}
+        </form>
+      </div>
+
   );
 };
 

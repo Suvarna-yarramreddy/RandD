@@ -1,59 +1,167 @@
-import React from "react";
-import { BsChevronDown, BsChevronUp } from "react-icons/bs";
+import React, { useState, useRef, useLayoutEffect } from "react";
+import { BsChevronDown, BsChevronUp, BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import { Link } from "react-router-dom";
 
-// Collapsible Section Component
-const CollapsibleSection = ({ title, items }) => {
-  const [isOpen, setIsOpen] = React.useState(false);
+const DropdownMenu = ({ title, items, isOpen, setOpenDropdown }) => {
+  const buttonRef = useRef(null);
+  const dropdownRef = useRef(null);
+  const [dropdownStyle, setDropdownStyle] = useState({ visibility: "hidden" });
+
+  useLayoutEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setDropdownStyle({
+        position: "fixed",
+        top: rect.bottom + "px",
+        left: rect.left + "px",
+        background: "#fff",
+        boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
+        borderRadius: "5px",
+        padding: "10px",
+        minWidth: "200px",
+        zIndex: 1050,
+        border: "1px solid #ddd",
+        whiteSpace: "nowrap",
+        visibility: "visible", // Prevents flickering
+      });
+    }
+  }, [isOpen]);
+
+  const handleClickOutside = (event) => {
+    if (
+      dropdownRef.current &&
+      !dropdownRef.current.contains(event.target) &&
+      buttonRef.current &&
+      !buttonRef.current.contains(event.target)
+    ) {
+      setOpenDropdown(null);
+    }
+  };
+
+  React.useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   return (
-    <li>
-      <div
-        className="d-flex justify-content-between align-items-center w-100 p-2 border-bottom"
-        style={{ cursor: "pointer" }}
-        onClick={() => setIsOpen(!isOpen)}
+    <div style={{ position: "relative", margin: "0 15px", flexShrink: 0 }}>
+      <button
+        ref={buttonRef}
+        onClick={() => setOpenDropdown(isOpen ? null : title)}
+        style={{
+          background: "none",
+          border: "none",
+          fontSize: "16px",
+          fontWeight: "600",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          color: "#2E8BC0",
+        }}
       >
-        <span>{title}</span>
-        <span>{isOpen ? <BsChevronUp /> : <BsChevronDown />}</span>
-      </div>
+        {title} {isOpen ? <BsChevronUp /> : <BsChevronDown />}
+      </button>
+
       {isOpen && (
-        <ul className="list-unstyled ms-3">
+        <div ref={dropdownRef} style={dropdownStyle}>
           {items.map((item, index) => (
-            <li key={index} style={{ marginBottom: "8px" }}>
-              <Link
-                to={`/instcor${item.replace(/\s+/g, "").toLowerCase()}`} // Adding 'instco' prefix to the route
-                style={{ textDecoration: "none", color: "#333" }}
-              >
-                {item}
-              </Link>
-            </li>
+            <Link
+              key={index}
+              to={`/instcor${item.replace(/\s+/g, "").toLowerCase()}`}  // Adding 'cor' prefix to the route
+              style={{
+                display: "block",
+                padding: "8px 12px",
+                textDecoration: "none",
+                color: "#0077b6",
+                fontSize: "14px",
+                fontWeight: "500",
+                borderRadius: "3px",
+                transition: "background 0.3s ease-in-out, color 0.3s ease-in-out",
+              }}
+              onMouseEnter={(e) => (e.target.style.backgroundColor = "#e3f2fd")}
+              onMouseLeave={(e) => (e.target.style.backgroundColor = "transparent")}
+            >
+              {item}
+            </Link>
           ))}
-        </ul>
+        </div>
       )}
-    </li>
+    </div>
   );
 };
 
-// Institute Coordinator Sidebar Component
-const InstCoSidebar = () => {
+const Topbar = () => {
+  const [openDropdown, setOpenDropdown] = useState(null);
+  const menuRef = useRef(null);
+
   const sections = [
     { title: "Publications", items: ["View Publications"] },
-    { title: "Patents", items: ["View Patents"] },
+    { title: "Patents", items: [ "View Patents"] },
     { title: "Seed Money", items: ["View Seed Money"] },
-    { title: "External Funded Projects", items: ["View Projects"] },
+    { title: "External Funded Projects", items: [ "View Projects"] },
     { title: "Consultancy", items: ["View Consultants"] },
     { title: "Research Scholars", items: ["View Scholars"] },
     { title: "Proposals Submitted", items: ["View Proposals"] },
   ];
 
+  const scrollMenu = (direction) => {
+    if (menuRef.current) {
+      const scrollAmount = 150;
+      menuRef.current.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth",
+      });
+    }
+  };
+
   return (
-    <div className="bg-light p-3">
-      <ul className="list-unstyled m-0">
-        {sections.map((section, index) => (
-          <CollapsibleSection key={index} title={section.title} items={section.items} />
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        width: "100%",
+        background: "#f8f9fa",
+        padding: "10px 20px",
+        boxShadow: "0px 2px 5px rgba(0,0,0,0.1)",
+        position: "sticky",
+        top: "98px",
+        left: "0",
+        zIndex: 999,
+        justifyContent: "space-between",
+      }}
+    >
+      <button
+        onClick={() => scrollMenu("left")}
+        style={{ background: "none", border: "none", cursor: "pointer", fontSize: "24px", padding: "5px", display: "flex", alignItems: "center", color: "#000" }}
+      >
+        <BsChevronLeft style={{ strokeWidth: "1px" }} />
+      </button>
+
+      <div
+        ref={menuRef}
+        style={{
+          display: "flex",
+          overflow: "hidden",
+          maxWidth: "85vw",
+          whiteSpace: "nowrap",
+          scrollBehavior: "smooth",
+          flexGrow: 1,
+          padding: "5px 0",
+        }}
+      >
+        {sections.map((section) => (
+          <DropdownMenu key={section.title} title={section.title} items={section.items} isOpen={openDropdown === section.title} setOpenDropdown={setOpenDropdown} />
         ))}
-      </ul>
+      </div>
+
+      <button
+        onClick={() => scrollMenu("right")}
+        style={{ background: "none", border: "none", cursor: "pointer", fontSize: "24px", padding: "5px", display: "flex", alignItems: "center", color: "#000" }}
+      >
+        <BsChevronRight style={{ strokeWidth: "1px" }} />
+      </button>
     </div>
   );
 };
 
-export default InstCoSidebar;
+export default Topbar;

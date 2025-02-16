@@ -1,47 +1,40 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import Navbar from "./navbar";
-import Sidebar from "./sidebar";
-import CoordinatorSidebar from "./depcorsidebar"; // Department Coordinator Sidebar
-import InstituteCoordinatorSidebar from "./instcorsidebar"; // Institute Coordinator Sidebar
+import UniversalNavbar from "./navbar"; // Common navbar for all users
+import FacultyTopbar from "./sidebar"; // Topbar for Faculty
+import CoordinatorTopbar from "./depcorsidebar"; // Topbar for Department Coordinator
+import InstituteCoordinatorTopbar from "./instcorsidebar"; // Topbar for Institute Coordinator
 
 const Layout = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [role, setRole] = useState(""); // Track the user's role
+  const [role, setRole] = useState(""); 
   const location = useLocation();
 
   useEffect(() => {
-    // Check login status and role from sessionStorage
     const loggedInStatus = sessionStorage.getItem("isLoggedIn") === "true";
-    const userRole = sessionStorage.getItem("role")?.toLowerCase() || ""; // Normalize role
+    const userRole = sessionStorage.getItem("role")?.toLowerCase() || ""; 
     setIsLoggedIn(loggedInStatus);
     setRole(userRole);
-  }, [location.pathname]); // Trigger on route changes
+  }, [location.pathname]);
+
+  // Function to get the appropriate top bar based on role
+  const getTopbar = () => {
+    if (role === "institutecoordinator") return <InstituteCoordinatorTopbar />;
+    if (role === "coordinator") return <CoordinatorTopbar />;
+    return <FacultyTopbar />;
+  };
 
   return (
-    <div>
-      {/* Navbar at the top */}
-      <Navbar setIsLoggedIn={setIsLoggedIn} setRole={setRole} />
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+      {/* Universal Navbar (always present) */}
+      <UniversalNavbar setIsLoggedIn={setIsLoggedIn} setRole={setRole} />
 
-      {/* Flexbox Layout for Sidebar and Content */}
-      <div style={{ display: "flex", height: "calc(100vh - 80px)" }}>
-        {/* Render Sidebar based on role */}
-        {isLoggedIn && (
-          <div style={{ width: "250px", backgroundColor: "#f9f9f9" }}>
-            {role === "institutecoordinator" ? (
-              <InstituteCoordinatorSidebar /> // Show Institute Coordinator Sidebar
-            ) : role === "coordinator" ? (
-              <CoordinatorSidebar /> // Show Department Coordinator Sidebar
-            ) : (
-              <Sidebar /> // Show Faculty Sidebar
-            )}
-          </div>
-        )}
+      {/* Role-specific Topbar (only for logged-in users) */}
+      {isLoggedIn && getTopbar()}
 
-        {/* Main Content */}
-        <div style={{ flex: 1, padding: "20px", overflowY: "auto" }}>
-          {children}
-        </div>
+      {/* Main Content */}
+      <div style={{ flex: 1, padding: "20px", overflowY: "auto" }}>
+        {children}
       </div>
     </div>
   );

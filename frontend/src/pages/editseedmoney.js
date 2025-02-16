@@ -4,196 +4,170 @@ import { useLocation, useNavigate } from 'react-router-dom';
 const EditSeedMoney = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { application } = location.state || {};
-    const [selectedFiles, setSelectedFiles] = useState([]);
-    const [formData, setFormData] = useState(application ? { ...application } : {
-        projectTitle: "",
-        financialYear: "",
-        facultyName: "",
-        department: "",
-        numStudents: "",
-        amountSanctioned: "",
-        amountReceived: "",
-        objectives: "",
-        outcomes: "",
-        students: [],
-        proof: []
+    const application = location.state?.application || {};
+
+    const [formData, setFormData] = useState({
+        financialYear: application.financialYear || '',
+        facultyName: application.facultyName || '',
+        department: application.department || '',
+        numStudents: application.numStudents || '',
+        projectTitle: application.projectTitle || '',
+        amountSanctioned: application.amountSanctioned || '',
+        amountReceived: application.amountReceived || '',
+        objectives: application.objectives || '',
+        outcomes: application.outcomes || '',
+        students: Array.isArray(application.students) ? application.students : [{ registration: '', name: '' }],
+        proof: Array.isArray(application.proof) ? application.proof : []
     });
-    const [deletedFiles, setDeletedFiles] = useState([]);
 
-const handleFileDelete = (index) => {
-    const updatedProofs = [...formData.proof];
-    const removedFile = updatedProofs.splice(index, 1)[0];
+    const [newProofFiles, setNewProofFiles] = useState([]); // To store new uploaded files
 
-    // Track deleted files
-    setDeletedFiles(prevDeleted => [...prevDeleted, removedFile]);
-
-    setFormData(prevState => ({
-        ...prevState,
-        proof: updatedProofs
-    }));
-};
-
+    // Handle input changes
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prevState => ({
-            ...prevState,
-            [name]: value
-        }));
+        setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    // Handle proof file uploads
     const handleFileChange = (e) => {
-        setSelectedFiles([...selectedFiles, ...e.target.files]);
+        const files = Array.from(e.target.files);
+        setNewProofFiles(files);
     };
 
-
-    const handleStudentChange = (index, e) => {
-        const { name, value } = e.target;
+    // Handle student data changes
+    const handleStudentChange = (index, field, value) => {
         const updatedStudents = [...formData.students];
-        updatedStudents[index] = { ...updatedStudents[index], [name]: value };
-        setFormData(prevState => ({
-            ...prevState,
-            students: updatedStudents
-        }));
+        updatedStudents[index][field] = value;
+        setFormData({ ...formData, students: updatedStudents });
+    };
+
+    // Add a new student field
+    const addStudent = () => {
+        setFormData({ ...formData, students: [...formData.students, { registration: '', name: '' }] });
+    };
+
+    // Remove a student
+    const removeStudent = (index) => {
+        const updatedStudents = formData.students.filter((_, i) => i !== index);
+        setFormData({ ...formData, students: updatedStudents });
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const data = new FormData();
-    
-        // Append form fields (excluding proof)
-        Object.keys(formData).forEach(key => {
-            if (key !== "proof" && key !== "students") {
-                data.append(key, formData[key]);
+        const formDataToSend = new FormData();
+
+        // Append text fields
+        Object.entries(formData).forEach(([key, value]) => {
+            if (key !== "students" && key !== "proof") {
+                formDataToSend.append(key, value);
             }
         });
-    
-        // Handle amountReceived as null if nothing is provided
-        if (!formData.amountReceived) {
-            data.append("amountReceived", null);
-        } else {
-            data.append("amountReceived", formData.amountReceived);
-        }
-    
-        // ✅ Append students safely
-        data.append("students", JSON.stringify(formData.students));
-    
-        // ✅ Append deleted proofs safely
-        data.append("deletedProofs", JSON.stringify(deletedFiles));
-    
-        // ✅ Append new proof files
-        selectedFiles.forEach(file => {
-            data.append("proof", file);
+
+        // Append students as JSON
+        formDataToSend.append("students", JSON.stringify(formData.students));
+
+        // Append new proof files
+        newProofFiles.forEach(file => {
+            formDataToSend.append("proof", file);
         });
-    
+
         try {
-            const response = await fetch(`http://localhost:5000/updateSeedMoney/${application.id}`, {
-                method: "PUT",
-                body: data,
+            const response = await fetch(`http://localhost:5000/updateseedmoney/${application.id}`, {
+                method: 'PUT',
+                body: formDataToSend,
             });
-    
-            if (!response.ok) {
-                throw new Error("Failed to update application");
-            }
-    
-            alert("Application updated successfully");
-            navigate("/viewseedmoney");
+
+            if (!response.ok) throw new Error("Failed to update application");
+
+            alert("Seed money application updated successfully!");
+            navigate('/viewseedmoney');
         } catch (error) {
             console.error("Error updating application:", error);
+            alert("Error updating seed money application.");
         }
     };
-    
-
-    // Fields to be displayed
-    const fields = [
-        { name: "projectTitle", label: "Project Title", type: "text" },
-        { name: "financialYear", label: "Financial Year", type: "text" },
-        { name: "facultyName", label: "Faculty Name", type: "text" },
-        { name: "department", label: "Department", type: "text" },
-        { name: "numStudents", label: "Number of Students", type: "number" },
-        { name: "amountSanctioned", label: "Amount Sanctioned", type: "number" },
-        { name: "amountReceived", label: "Amount Received", type: "number" },
-        { name: "objectives", label: "Objectives", type: "textarea" },
-        { name: "outcomes", label: "Expected Outcomes", type: "textarea" }
-    ];
 
     return (
         <div className="container mt-4">
-            <h2 className="text-center text-dark mb-4">Edit Seed Money Application</h2>
-            <form onSubmit={handleSubmit}>
-                
-                {/* Form Fields (Always 2 per row) */}
-                <div className="row">
-                    {fields.map((field, index) => (
-                        <div className="col-md-6 mb-3" key={index}>
-                            <label className="form-label"><strong>{field.label}</strong></label>
-                            {field.type === "textarea" ? (
-                                <textarea name={field.name} className="form-control" value={formData[field.name] || ""} onChange={handleChange}  />
-                            ) : (
-                                <input type={field.type} name={field.name} className="form-control" value={formData[field.name] || ""} onChange={handleChange}/>
-                            )}
+            <h2 className="text-center mb-4">Edit Seed Money Application</h2>
+            <form onSubmit={handleSubmit} encType="multipart/form-data">
+                <div className="row row-cols-1 row-cols-md-2 g-3">
+                    {/* Input Fields */}
+                    {["financialYear", "facultyName", "department", "numStudents", "projectTitle", "amountSanctioned", "amountReceived", "objectives", "outcomes"].map((key) => (
+                        <div key={key} className="col">
+                            <label className="form-label text-capitalize">{key.replace(/([A-Z])/g, ' $1')}</label>
+                            <input
+                                type={key.includes("amount") ? "number" : "text"}
+                                className="form-control"
+                                name={key}
+                                value={formData[key]}
+                                onChange={handleChange}
+                                required
+                            />
                         </div>
                     ))}
-                </div>
 
-                {/* Students Section (Always 2 per row) */}
-                {formData.students.length > 0 && (
-                    <div className="mb-3">
+                    {/* Students Section */}
+                    <div className="col-12">
                         <label className="form-label"><strong>Students Involved</strong></label>
-                        <div className="row">
-                            {formData.students.map((student, index) => (
-                                <div className="col-md-6 mb-3" key={index}>
-                                    <div className="p-3 border rounded">
-                                        <label className="form-label"><strong>Student {index + 1}</strong></label>
-                                        <input
-                                            type="text"
-                                            name="name"
-                                            className="form-control mb-2"
-                                            placeholder="Student Name"
-                                            value={student.name || ""}
-                                            onChange={(e) => handleStudentChange(index, e)}
-                                        />
-                                        <input
-                                            type="text"
-                                            name="registration"
-                                            className="form-control"
-                                            placeholder="Registration Number"
-                                            value={student.registration || ""}
-                                            onChange={(e) => handleStudentChange(index, e)}
-                                        
-                                        />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {/* Proof Documents Section */}
-                {formData.proof.length > 0 && (
-                    <div className="mb-3">
-                        <label className="form-label"><strong>Proof Documents</strong></label>
-                        {formData.proof.map((file, index) => (
-                            <div key={index} className="d-flex align-items-center">
-                                <a href={`http://localhost:5000/${file}`} target="_blank" rel="noopener noreferrer">
-                                    View Proof {index + 1}
-                                </a>
-                                <button type="button" className="btn btn-danger btn-sm ms-2" onClick={() => handleFileDelete(index)}>Delete</button>
+                        {formData.students.map((student, index) => (
+                            <div key={index} className="d-flex gap-2 mb-2">
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    placeholder="Registration Number"
+                                    value={student.registration}
+                                    onChange={(e) => handleStudentChange(index, "registration", e.target.value)}
+                                    required
+                                />
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    placeholder="Student Name"
+                                    value={student.name}
+                                    onChange={(e) => handleStudentChange(index, "name", e.target.value)}
+                                    required
+                                />
+                                {index > 0 && (
+                                    <button type="button" className="btn btn-danger" onClick={() => removeStudent(index)}>X</button>
+                                )}
                             </div>
                         ))}
+                        <button type="button" className="btn btn-secondary mt-2" onClick={addStudent}>+ Add Student</button>
                     </div>
-                )}
 
-                {/* File Upload Input */}
-                <div className="mb-3">
-                    <label className="form-label"><strong>Upload Proof Documents</strong></label>
-                    <input type="file" className="form-control" multiple onChange={handleFileChange} />
+                    {/* Existing Proof Documents */}
+                    <div className="col-12">
+                        <label className="form-label"><strong>Existing Proof Documents</strong></label>
+                        {formData.proof.length > 0 ? (
+                            formData.proof.map((file, index) => (
+                                <p key={index}>
+                                    <a href={`http://localhost:5000/${file}`} target="_blank" rel="noopener noreferrer">
+                                        View Proof {index + 1}
+                                    </a>
+                                </p>
+                            ))
+                        ) : (
+                            <p>No proof documents uploaded</p>
+                        )}
+                    </div>
+
+                    {/* Upload New Proof Files */}
+                    <div className="col-12">
+                        <label className="form-label"><strong>Upload New Proof Documents</strong></label>
+                        <input
+                            type="file"
+                            className="form-control"
+                            multiple
+                            accept=".pdf,.doc,.docx,.jpg,.png"
+                            onChange={handleFileChange}
+                        />
+                    </div>
                 </div>
 
-                <button type="submit" className="btn btn-success">Update</button>
-                <button type="button" className="btn btn-secondary ms-2" onClick={() => navigate('/viewseedmoney')}>
-                        Cancel
-                    </button>
+                <div className="d-flex gap-2 mt-3 justify-content-center">
+                    <button type="submit" className="btn btn-primary">Update</button>
+                    <button type="button" className="btn btn-secondary" onClick={() => navigate('/viewseedmoney')}>Cancel</button>
+                </div>
             </form>
         </div>
     );

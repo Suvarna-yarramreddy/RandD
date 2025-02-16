@@ -50,12 +50,16 @@ const SeedMoneyPage = () => {
                         <div className="col-md-6 mb-4" key={app.id}>
                             <div className="card">
                                 <div className="card-body flex-column">
+                                    <div className='d-flex justify-content-between align-items-center mb-3'>
                                     <h5 className="card-title">
                                         <strong>Project Title: </strong>
                                         <a href="#!" onClick={() => handleToggleDetails(app.id)} className="text-primary">
                                             {app.projectTitle}
                                         </a>
                                     </h5>
+                                    <button className="btn btn-warning mt-2" onClick={() => handleEdit(app)}>Edit</button>
+                                    </div>
+
                                     {visibleDetails === app.id && (
                                         <div className="overflow-auto" style={{ maxHeight: '200px' }}>
                                             <div className="card-details">
@@ -108,7 +112,6 @@ const SeedMoneyPage = () => {
                                             </div>
                                         </div>
                                     )}
-                                    <button className="btn btn-primary mt-2" onClick={() => handleEdit(app)}>Edit</button>
                                 </div>
                             </div>
                         </div>

@@ -226,9 +226,14 @@ app.get('/api/stats/:facultyId', async (req, res) => {
   
     // Queries to fetch statistics based on facultyId
     const queries = {
-      total_faculty: 'SELECT COUNT(*) AS count FROM faculty WHERE faculty_id = ?',
       total_publications: 'SELECT COUNT(*) AS count FROM publications WHERE faculty_id = ?',
       total_patents: 'SELECT COUNT(*) AS count FROM patents WHERE faculty_id = ?',
+      total_seedmoney: 'SELECT COUNT(*) AS count FROM seedmoney WHERE faculty_id = ?',
+      total_external: 'SELECT COUNT(*) AS count FROM fundedprojects WHERE faculty_id = ?',
+      total_consultancy: 'SELECT COUNT(*) AS count FROM consultancy_projects WHERE faculty_id = ?',
+      total_proposal: 'SELECT COUNT(*) AS count FROM proposals WHERE faculty_id = ?',
+      total_scholar: 'SELECT COUNT(*) AS count FROM research WHERE faculty_id = ?',
+
     };
   
     try {
@@ -247,9 +252,16 @@ app.get('/api/stats/:facultyId', async (req, res) => {
       );
   
       const response = {
-        total_faculty: stats[0],
         total_publications: stats[1],
         total_patents: stats[2],
+        total_seedmoney:stats[3],
+        total_external:stats[4],
+        total_consultancy:stats[5],
+        total_scholar:stats[6],
+        total_proposal:stats[7],
+
+
+
       };
   
       res.json(response);
@@ -258,18 +270,17 @@ app.get('/api/stats/:facultyId', async (req, res) => {
       res.status(500).json({ message: 'Internal Server Error' });
     }
   });
-
   
   const storage = multer.diskStorage({
       destination: (req, file, cb) => {
           let dir;
   
           // Dynamically set upload directory based on the request URL
-          if (req.url.includes('addPatent')) {
+          if (req.url.includes('addPatent') || req.url.match(/update-patent\/\d+/)) {
               dir = './uploads/patents/';
-          } else if (req.url.includes('addPublication')) {
+          } else if (req.url.includes('addPublication') || req.url.match(/update-publication\/\d+/)) {
               dir = './uploads/publications/';
-          } else if (req.url.includes('addSeedMoney') || req.url.match(/updateSeedMoney\/\d+/)) {
+          } else if (req.url.includes('addSeedMoney') || req.url.match(/updateseedmoney\/\d+/)) {
               dir = './uploads/seedmoney/';
           }  else if (req.url.includes('addConsultancy') || req.url.match(/updateConsultancy\/\d+/)) {
             dir = './uploads/consultancy/';
@@ -385,8 +396,6 @@ app.get("/getPublications/:faculty_id", (req, res) => {
     });
 });
 
-
-// Update Publication Endpoint
 app.put('/update-publication/:id', upload.single('proofOfPublication'), (req, res) => {
     const publicationId = req.params.id; // Extract the ID from the route parameter
 
@@ -432,11 +441,10 @@ app.put('/update-publication/:id', upload.single('proofOfPublication'), (req, re
         } = req.body;
 
         // Handle file upload or retain the existing proofOfPublication
-        let proofOfPublication = existingData.proofOfPublication;  // Default to the existing value
-
+        let proofOfPublication = existingData.proofOfPublication; // Default to the existing value
         if (req.file) {
-            // If a new file is uploaded, store the new path
-            proofOfPublication = `uploads/publications/${req.file.filename}`; // Updated file path
+            // Ensure the file path format matches "uploads\publications\filename.pdf"
+            proofOfPublication = path.join("uploads", "publications", req.file.filename).replace(/\//g, '\\');
         }
 
         // Update query
@@ -493,6 +501,7 @@ app.put('/update-publication/:id', upload.single('proofOfPublication'), (req, re
         });
     });
 });
+
   
 // Route to add patent with file upload
 app.post("/addPatent", upload.single('proofOfPatent'), (req, res) => {
@@ -636,9 +645,9 @@ app.put('/update-patent/:id', upload.single('proofOfPatent'), (req, res) => {
         // Handle file upload
         let proofOfPatent = existingData.proofOfPatent;
         if (req.file) {
-            proofOfPatent = `uploads/patents/${req.file.filename}`;
+            proofOfPatent = path.join("uploads", "patents", req.file.filename).replace(/\//g, '\\');
         }
-        proofOfPatent = proofOfPatent.replace(/\\/g, '/'); // Fix Windows file path
+       
 
         // Override status to "Applied" on every update
         const updatedStatus = "Applied";
@@ -773,6 +782,66 @@ app.get("/getSeedMoney/:faculty_id", (req, res) => {
     });
 });
 
+app.put('/updateseedmoney/:id', upload.array('proof'), (req, res) => {
+    const { id } = req.params;
+    const { financialYear, facultyName, department, numStudents, projectTitle, amountSanctioned, amountReceived, objectives, outcomes, students } = req.body;
+    
+    // Store proof file paths in "uploads/seedmoney/"
+    const proofFiles = req.files.map(file => `uploads/seedmoney/${file.filename}`);
+
+    // Convert students string to JSON if needed
+    let studentsData;
+    try {
+        studentsData = JSON.parse(students);
+    } catch (error) {
+        return res.status(400).json({ message: "Invalid students format" });
+    }
+
+    // Fetch the existing proof files from the database
+    const selectQuery = `SELECT proof FROM seedmoney WHERE id = ?`;
+    db.query(selectQuery, [id], (selectErr, results) => {
+        if (selectErr) return res.status(500).send(selectErr);
+
+        let existingProofs = [];
+
+        if (results.length > 0 && results[0].proof) {
+            try {
+                let proofData = results[0].proof;
+
+                // Ensure proofData is a valid JSON array
+                if (typeof proofData === "string" && proofData.trim() !== "") {
+                    existingProofs = JSON.parse(proofData);
+                    if (!Array.isArray(existingProofs)) {
+                        throw new Error("Proof field is not a valid array");
+                    }
+                }
+            } catch (error) {
+                console.error("Error parsing existing proof data:", error);
+                existingProofs = []; // Fallback to an empty array
+            }
+        }
+
+        // Combine existing proof files with newly uploaded ones
+        const updatedProofs = [...existingProofs, ...proofFiles];
+
+        // Update the record
+        const updateQuery = `
+            UPDATE seedmoney 
+            SET financialYear=?, facultyName=?, department=?, numStudents=?, projectTitle=?, 
+                amountSanctioned=?, amountReceived=?, objectives=?, outcomes=?, students=?, proof=? 
+            WHERE id=?
+        `;
+
+        db.query(updateQuery, 
+            [financialYear, facultyName, department, numStudents, projectTitle, amountSanctioned, 
+             amountReceived, objectives, outcomes, JSON.stringify(studentsData), JSON.stringify(updatedProofs), id], 
+            (updateErr) => {
+                if (updateErr) return res.status(500).send(updateErr);
+                res.send("Updated successfully!");
+            }
+        );
+    });
+});
 
 
 
@@ -907,90 +976,15 @@ app.get('/getConsultancy/:id', (req, res) => {
         res.status(200).json(result);
     });
 });
+app.put('/updateConsultancy/:id', upload.array('report'), async (req, res) => {
+    const { id } = req.params;
+    const { financialYear, department, startdateofProject, numoffaculty, titleofconsultancy, domainofconsultancy, clientorganization, clientaddress, amountreceived, dateofamountreceived, facilities, faculties } = req.body;
+    const report = req.files.map(file => file.path);
 
-app.put('/updateConsultancy/:id', upload.array('report', 10), (req, res) => {
-    const consultancyId = req.params.id;
-    const {
-        titleofconsultancy,
-        financialYear,
-        department,
-        startdateofProject,
-        numoffaculty,
-        domainofconsultancy,
-        clientorganization,
-        clientaddress,
-        amountreceived,
-        dateofamountreceived,
-        facilities,
-        faculties,
-        existingFiles  // Handle the existing files being sent from client
-    } = req.body;
+    const updateQuery = `UPDATE consultancy_projects SET financialYear=?, department=?, startdateofProject=?, numoffaculty=?, titleofconsultancy=?, domainofconsultancy=?, clientorganization=?, clientaddress=?, amountreceived=?, dateofamountreceived=?, facilities=?, faculties=?, report=? WHERE consultancy_id=?`;
 
-    // Ensure uploaded files exist
-    const uploadedFiles = req.files || [];
-
-    // Handle existing files, if present, safely
-    let existingFilesParsed = [];
-    if (existingFiles) {
-        try {
-            existingFilesParsed = JSON.parse(existingFiles);  // Parsing the stringified array of existing files
-        } catch (error) {
-            return res.status(400).send('Invalid existingFiles data');
-        }
-    }
-
-    // Map uploaded files to store file URLs (relative paths)
-    const updatedReport = uploadedFiles.map(file => ({
-        path: `/uploads/consultancy/${file.filename}`,  // Construct the file URL (relative path)
-        originalname: file.originalname
-    }));
-
-    // Combine existing files with the updated files if needed
-    const finalReport = [...existingFilesParsed, ...updatedReport];
-
-    const query = `
-        UPDATE consultancy_projects
-        SET
-            titleofconsultancy = ?,
-            financialYear = ?,
-            department = ?,
-            startdateofProject = ?,
-            numoffaculty = ?,
-            domainofconsultancy = ?,
-            clientorganization = ?,
-            clientaddress = ?,
-            amountreceived = ?,
-            dateofamountreceived = ?,
-            facilities = ?,
-            report = ?,
-            faculties = ?
-        WHERE consultancy_id = ?
-    `;
-
-    const values = [
-        titleofconsultancy,
-        financialYear,
-        department,
-        startdateofProject,
-        numoffaculty,
-        domainofconsultancy,
-        clientorganization,
-        clientaddress,
-        amountreceived,
-        dateofamountreceived,
-        facilities,
-        JSON.stringify(finalReport),  // Convert report array to JSON string
-        JSON.stringify(faculties),
-        consultancyId
-    ];
-
-    db.query(query, values, (err, result) => {
-        if (err) {
-            console.error('Error updating project:', err);
-            return res.status(500).send('Error updating project');
-        }
-        res.send('Project updated successfully!');
-    });
+     db.query(updateQuery, [financialYear, department, startdateofProject, numoffaculty, titleofconsultancy, domainofconsultancy, clientorganization, clientaddress, amountreceived, dateofamountreceived, facilities, faculties, JSON.stringify(report), id]);
+    res.json({ message: "Project updated successfully" });
 });
 
   
@@ -1176,7 +1170,65 @@ app.post('/coordinatorlogin', (req, res) => {
       }
     });
   });
-  
+  app.get('/api/stats/department/:coordinatorId', async (req, res) => {
+    const { coordinatorId } = req.params;
+
+    // Query to fetch the department of the coordinator
+    const getDepartmentQuery = 'SELECT department FROM depcorlogin WHERE coordinatorid = ?';
+
+    // Queries to fetch statistics for the department
+    const queries = {
+        total_faculty: 'SELECT COUNT(*) AS count FROM faculty WHERE department = ?',
+        total_publications: 'SELECT COUNT(*) AS count FROM publications WHERE faculty_id IN (SELECT faculty_id FROM faculty WHERE department = ?)',
+        total_patents: 'SELECT COUNT(*) AS count FROM patents WHERE faculty_id IN (SELECT faculty_id FROM faculty WHERE department = ?)',
+        total_seedmoney: 'SELECT COUNT(*) AS count FROM seedmoney WHERE faculty_id IN (SELECT faculty_id FROM faculty WHERE department = ?)',
+        total_external: 'SELECT COUNT(*) AS count FROM fundedprojects WHERE faculty_id IN (SELECT faculty_id FROM faculty WHERE department = ?)',
+        total_consultancy: 'SELECT COUNT(*) AS count FROM consultancy_projects WHERE faculty_id IN (SELECT faculty_id FROM faculty WHERE department = ?)',
+        total_proposal: 'SELECT COUNT(*) AS count FROM proposals WHERE faculty_id IN (SELECT faculty_id FROM faculty WHERE department = ?)',
+        total_scholar: 'SELECT COUNT(*) AS count FROM research WHERE faculty_id IN (SELECT faculty_id FROM faculty WHERE department = ?)',
+    };
+
+    try {
+        // Get the department of the coordinator
+        const department = await new Promise((resolve, reject) => {
+            db.query(getDepartmentQuery, [coordinatorId], (err, results) => {
+                if (err) return reject(err);
+                if (results.length === 0) return reject('Coordinator not found');
+                resolve(results[0].department);
+            });
+        });
+
+        // Function to execute queries using department
+        const executeQuery = (query, department) =>
+            new Promise((resolve, reject) => {
+                db.query(query, [department], (err, results) => {
+                    if (err) return reject(err);
+                    resolve(results[0].count);
+                });
+            });
+
+        // Fetch statistics for the department
+        const stats = await Promise.all(
+            Object.entries(queries).map(([key, query]) => executeQuery(query, department))
+        );
+
+        const response = {
+            total_faculty: stats[0],
+            total_publications: stats[1],
+            total_patents: stats[2],
+            total_seedmoney: stats[3],
+            total_external: stats[4],
+            total_consultancy: stats[5],
+            total_scholar: stats[6],
+            total_proposal: stats[7],
+        };
+
+        res.json(response);
+    } catch (error) {
+        console.error('Error fetching department statistics:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
   app.get('/getAllPublications', (req, res) => {
     const coordinatorId = req.query.coordinatorid;  // Get coordinatorId from the request query
 

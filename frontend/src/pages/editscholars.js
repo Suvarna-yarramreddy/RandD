@@ -88,21 +88,22 @@ const EditScholar = () => {
             <h2 className="text-center mb-4">Edit Scholar Details</h2>
             <form onSubmit={handleSubmit} encType="multipart/form-data">
                 <div className="row row-cols-1 row-cols-md-2 g-3">
-                    {Object.entries(formData).map(([key, value]) =>
-                        value !== "" && value !== null && !["admissionLetter", "guideAllotmentLetter", "completionProceedings"].includes(key) ? (
-                            <div key={key} className="col">
-                                <label className="form-label text-capitalize">{key.replace(/([A-Z])/g, ' $1')}</label>
-                                <input
-                                    type={key.includes("Date") ? "date" : "text"}
-                                    className="form-control"
-                                    name={key}
-                                    value={value}
-                                    onChange={handleChange}
-                                    required={key !== "awardDate" && key !== "fellowship"}
-                                />
-                            </div>
-                        ) : null
-                    )}
+                {Object.entries(formData).map(([key, value]) =>
+    !["admissionLetter", "guideAllotmentLetter", "completionProceedings"].includes(key) ? (
+        <div key={key} className="col">
+            <label className="form-label text-capitalize">{key.replace(/([A-Z])/g, ' $1')}</label>
+            <input
+                type={key.includes("Date") ? "date" : "text"}
+                className="form-control"
+                name={key}
+                value={value || ''}  // Ensure value is always a string
+                onChange={handleChange}
+                required={key !== "awardDate" && key !== "fellowship"}
+            />
+        </div>
+    ) : null
+)}
+
 
                     {/* File Upload Fields with Existing File Links */}
                     {["admissionLetter", "guideAllotmentLetter", "completionProceedings"].map((key) => (
@@ -130,10 +131,13 @@ const EditScholar = () => {
                         </div>
                     ))}
                 </div>
-
-                <div className="mt-4">
-                    <button type="submit" className="btn btn-success">Save Changes</button>
-                    <button type="button" className="btn btn-secondary ms-2" onClick={() => navigate('/viewscholars')}>Cancel</button>
+                <div className="d-flex gap-2 mt-3 justify-content-center">
+                    <button type="submit" className="btn btn-primary">
+                        Update 
+                    </button>
+                    <button type="button" className="btn btn-secondary" onClick={() => navigate('/viewscholars')}>
+                        Cancel
+                    </button>
                 </div>
             </form>
         </div>

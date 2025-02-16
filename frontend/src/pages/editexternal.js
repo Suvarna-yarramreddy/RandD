@@ -87,9 +87,11 @@ const EditFundedProject = () => {
                         </div>
                     ))}
                 </div>
-                <div className="text-center mt-3">
-                    <button type="submit" className="btn btn-success">Update Project</button>
-                    <button type="button" className="btn btn-secondary ms-2" onClick={() => navigate('/viewprojects')}>
+                <div className="d-flex gap-2 mt-3 justify-content-center">
+                    <button type="submit" className="btn btn-primary">
+                        Update 
+                    </button>
+                    <button type="button" className="btn btn-secondary" onClick={() => navigate('/viewprojects')}>
                         Cancel
                     </button>
                 </div>

@@ -1,353 +1,139 @@
-import React, { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const EditPublicationsPage = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const pub = location.state.publication; // Get the publication data passed via state
+    const pub = location.state?.publication || {}; // Safely get publication data
 
-    const [formData, setFormData] = useState({
-        ...pub // Set initial form data with the publication details
-    });
+    const [formData, setFormData] = useState({ ...pub });
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData((prev) => ({ ...prev, [name]: value }));
     };
+
     const handleFileChange = (e) => {
         const { name, files } = e.target;
         if (files.length > 0) {
-            setFormData(prev => ({
+            setFormData((prev) => ({
                 ...prev,
-                [name]: files[0], // Update with the new file
+                [name]: files[0], // Store the new file
             }));
         }
     };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-    
+
         try {
             const formDataToSend = new FormData();
-    
-            // Append only defined and non-empty values
-            for (const [key, value] of Object.entries(formData)) {
+            Object.entries(formData).forEach(([key, value]) => {
                 if (value !== undefined && value !== null) {
                     formDataToSend.append(key, value);
                 }
-            }
-    
-            const response = await fetch(`http://localhost:5000/update-publication/${pub.publication_id}`, {
-                method: 'PUT',
-                body: formDataToSend,
             });
-    
+
+            const response = await fetch(
+                `http://localhost:5000/update-publication/${pub.publication_id}`,
+                {
+                    method: "PUT",
+                    body: formDataToSend,
+                }
+            );
+
             if (!response.ok) {
-                const errorDetails = await response.json(); // If server provides error details
-                console.error('Error details:', errorDetails);
-                throw new Error('Failed to update publication');
+                const errorDetails = await response.json();
+                console.error("Error details:", errorDetails);
+                throw new Error("Failed to update publication");
             }
-    
+
             const result = await response.json();
-            console.log(result.message); // Log the success message
-            navigate('/viewpublications'); // Redirect on success
+            console.log(result.message);
+            navigate("/viewpublications");
         } catch (error) {
-            console.error('Error updating publication:', error);
-            alert(error.message || 'Failed to update publication');
+            console.error("Error updating publication:", error);
+            alert(error.message || "Failed to update publication");
         }
     };
-    
-    const handleCancel = () => {
-        navigate('/viewpublications'); // Navigate to view publications page on cancel
-    };
+
+    const handleCancel = () => navigate("/viewpublications");
+
+    // List of input fields dynamically generated
+    const publicationFields = [
+        "natureOfPublication",
+        "typeOfPublication",
+        "titleOfPaper",
+        "nameOfJournalConference",
+        "titleofChapter",
+        "nameofbook",
+        "nameOfPublisher",
+        "quartile",
+        "issnIsbn",
+        "authorStatus",
+        "firstAuthorName",
+        "firstAuthorAffiliation",
+        "coAuthors",
+        "indexed",
+        "impactFactor",
+        "doi",
+        "linkOfPaper",
+        "scopusLink",
+        "volume",
+       "monthYear",
+        "pageNo",
+        "citeAs",
+    ];
 
     return (
         <div className="container my-4">
             <h2>Edit Publication</h2>
             <form onSubmit={handleSubmit}>
                 <div className="row">
-                    {pub.natureOfPublication && (
-                        <div className="col-md-6 mb-3">
-                            <label className="form-label">Nature of Publication</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="natureOfPublication"
-                                value={formData.natureOfPublication}
-                                onChange={handleInputChange}
-                            />
-                        </div>
+                    {publicationFields.map(
+                        (field) =>
+                            pub[field] !== undefined && (
+                                <div key={field} className="col-md-6 mb-3">
+                                    <label className="form-label">
+                                        {field.replace(/([A-Z])/g, " $1").trim()}
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        name={field}
+                                        value={formData[field]}
+                                        onChange={handleInputChange}
+                                    />
+                                </div>
+                            )
                     )}
-                    {pub.typeOfPublication && (
-                        <div className="col-md-6 mb-3">
-                            <label className="form-label">Type of Publication</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="typeOfPublication"
-                                value={formData.typeOfPublication}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                    )}
-                    {pub.titleOfPaper && (
-                        <div className="col-md-6 mb-3">
-                            <label className="form-label">Title of Paper</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="titleOfPaper"
-                                value={formData.titleOfPaper}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                    )}
-                    {pub.nameOfJournalConference && (
-                        <div className="col-md-6 mb-3">
-                            <label className="form-label">Journal/Conference</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="nameOfJournalConference"
-                                value={formData.nameOfJournalConference}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                    )}
-                    {pub.titleofChapter && (
-                        <div className="col-md-6 mb-3">
-                            <label className="form-label">Title of Chapter</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="titleofChapter"
-                                value={formData.titleofChapter}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                    )}
-                    {pub.nameofbook && (
-                        <div className="col-md-6 mb-3">
-                            <label className="form-label">Name of Book</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="nameofbook"
-                                value={formData.nameofbook}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                    )}
-                    {pub.nameOfPublisher && (
-                        <div className="col-md-6 mb-3">
-                            <label className="form-label">Publisher</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="nameOfPublisher"
-                                value={formData.nameOfPublisher}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                    )}
-                    {pub.quartile && (
-                        <div className="col-md-6 mb-3">
-                            <label className="form-label">Quartile</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="quartile"
-                                value={formData.quartile}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                    )}
-                    {pub.issnIsbn && (
-                        <div className="col-md-6 mb-3">
-                            <label className="form-label">ISSN/ISBN</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="issnIsbn"
-                                value={formData.issnIsbn}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                    )}
-                    {pub.authorStatus && (
-                        <div className="col-md-6 mb-3">
-                            <label className="form-label">Author Status</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="authorStatus"
-                                value={formData.authorStatus}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                    )}
-                    {pub.firstAuthorName && (
-                        <div className="col-md-6 mb-3">
-                            <label className="form-label">First Author Name</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="firstAuthorName"
-                                value={formData.firstAuthorName}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                    )}
-                    {pub.firstAuthorAffiliation && (
-                        <div className="col-md-6 mb-3">
-                            <label className="form-label">First Author Affiliation</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="firstAuthorAffiliation"
-                                value={formData.firstAuthorAffiliation}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                    )}
-                    {pub.coAuthors && (
-                        <div className="col-md-6 mb-3">
-                            <label className="form-label">Co-Authors</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="coAuthors"
-                                value={formData.coAuthors}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                    )}
-                    {pub.indexed && (
-                        <div className="col-md-6 mb-3">
-                            <label className="form-label">Indexed</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="indexed"
-                                value={formData.indexed}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                    )}
-                    {pub.impactFactor && (
-                        <div className="col-md-6 mb-3">
-                            <label className="form-label">Impact Factor</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="impactFactor"
-                                value={formData.impactFactor}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                    )}
-                    {pub.doi && (
-                        <div className="col-md-6 mb-3">
-                            <label className="form-label">DOI</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="doi"
-                                value={formData.doi}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                    )}
-                    {pub.linkOfPaper && (
-                        <div className="col-md-6 mb-3">
-                            <label className="form-label">Link to Paper</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="linkOfPaper"
-                                value={formData.linkOfPaper}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                    )}
-                    {pub.scopusLink && (
-                        <div className="col-md-6 mb-3">
-                            <label className="form-label">Scopus Link</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="scopusLink"
-                                value={formData.scopusLink}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                    )}
-                    {pub.volume && (
-                        <div className="col-md-6 mb-3">
-                            <label className="form-label">Volume</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="volume"
-                                value={formData.volume}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                    )}
-                    {pub.pageNo && (
-                        <div className="col-md-6 mb-3">
-                            <label className="form-label">Page Number</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="pageNo"
-                                value={formData.pageNo}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                    )}
-                    {pub.monthYear && (
-                        <div className="col-md-6 mb-3">
-                            <label className="form-label">Year & Month</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="monthYear"
-                                value={formData.monthYear}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                    )}
-                    {pub.citeAs && (
-                        <div className="col-md-6 mb-3">
-                            <label className="form-label">Cite As</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="citeAs"
-                                value={formData.citeAs}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                    )}
-                    {pub.proofOfPublication && (
-                        <div className="col-md-6 mb-3">
-                            <label className="form-label">Proof of Publication</label>
+                    
+                    {/* Proof of Publication File Upload */}
+                    <div className="col-md-6 mb-3">
+                        <label className="form-label">Proof of Publication</label>
+                        {pub.proofOfPublication && (
                             <div>
-                                <small>Existing file:</small>
-                            <a href={`http://localhost:5002${pub.proofOfPublication}`} target="_blank" rel="noopener noreferrer">View Proof</a>
+                              <a href={`http://localhost:5000/${pub.proofOfPublication}`} target="_blank" rel="noopener noreferrer">View Proof</a>
                             </div>
-                            <input
-                                type="file"
-                                className="form-control"
-                                name="proofOfPublication"
-                                onChange={handleFileChange}
-                            />
-                        </div>
-                    )}
+                        )}
+                        <input
+                            type="file"
+                            className="form-control"
+                            name="proofOfPublication"
+                            onChange={handleFileChange}
+                        />
+                    </div>
                 </div>
 
-                <button type="submit" className="btn btn-primary">Save Changes</button>
-                <button type="button" className="btn btn-secondary ms-2" onClick={handleCancel}>Cancel</button>
+                <div className="d-flex gap-2 mt-3 justify-content-center">
+                    <button type="submit" className="btn btn-primary">
+                        Update 
+                    </button>
+                    <button type="button" className="btn btn-secondary" onClick={handleCancel}>
+                        Cancel
+                    </button>
+                </div>
+
             </form>
         </div>
     );

@@ -36,7 +36,7 @@ const ViewProposals = () => {
 
     // Navigate to edit proposal page with ID
     const handleEdit = (proposal) => {
-        navigate(`/editproposal`,{ state: {proposal } }); // Pass ID as route parameter
+        navigate("/editproposal",{ state: {proposal } }); // Pass ID as route parameter
     };
 
     if (loading) {
@@ -68,12 +68,10 @@ const ViewProposals = () => {
                                                 {prop.projectTitle}
                                             </a>
                                         </h5>
-                                        <button 
-                                            className="btn btn-warning btn-sm"
-                                            onClick={() => handleEdit(prop)} // Edit button
-                                        >
-                                            Edit
-                                        </button>
+                                       
+                                        <button className="btn btn-warning mt-2" onClick={() => handleEdit(prop)}>
+                                                Edit
+                                            </button>
                                     </div>
                                     {visibleDetails === prop.id && (
                                         <div className="card-details overflow-auto" style={{ maxHeight: '250px' }}>

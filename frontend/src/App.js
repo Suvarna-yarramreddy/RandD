@@ -45,6 +45,7 @@ import InstViewScholars from './pages/instviewscholars';
 import InstViewProposals from './pages/instviewproposals';
 import EditFundedProjectPage from './pages/editexternal';
 import EditConsultancyProject from './pages/editconsultancy';
+import EditProposal from './pages/editproposal';
 const App = () => {
   return (
     <Router>
@@ -93,6 +94,7 @@ const App = () => {
           <Route path="/instcorviewproposals" element={<InstViewProposals/>}/>
           <Route path="/editexternal" element={<EditFundedProjectPage/>}/>
           <Route path="/editconsultancy" element={<EditConsultancyProject/>}/>
+          <Route path="/editproposal" element={<EditProposal/>}/>
         </Routes>
       </Layout>
     </Router>
