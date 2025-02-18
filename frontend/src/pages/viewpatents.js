@@ -34,6 +34,26 @@ const PatentsPage = () => {
         navigate('/editpatents', { state: { patents: patent } });
     };
 
+    const handleDelete = async (patentId) => {
+        const confirmDelete = window.confirm("Are you sure you want to delete this patent?");
+        if (!confirmDelete) return;
+
+        try {
+            const response = await fetch(`http://localhost:5000/deletePatent/${patentId}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete patent');
+            }
+
+            setPatents(patents.filter(pat => pat.patent_id !== patentId));
+            alert("Patent deleted successfully!");
+        } catch (error) {
+            console.error('Error deleting patent:', error);
+            alert("Failed to delete the patent.");
+        }
+    };
 
     return (
         <div className="container mt-2">
@@ -57,6 +77,9 @@ const PatentsPage = () => {
                                             {pat.inventionTitle}
                                         </a>
                                     </h5>
+                                    <button className="btn btn-danger mt-2" onClick={() => handleDelete(pat.patent_id)}>
+                                                Delete
+                                            </button>
                                     {pat.status === 'Rejected by Department R&D Coordinator' && (
                                                 <button
                                                     className="btn btn-warning mt-2"

@@ -40,6 +40,27 @@ const SeedMoneyPage = () => {
     const handleEdit = (app) => {
         navigate('/editseedmoney', { state: { application: app } });
     };
+    const handleDelete = async (seedmoneyId) => {
+        const confirmDelete = window.confirm("Are you sure you want to delete this seedmoney?");
+        if (!confirmDelete) return;
+
+        try {
+            const response = await fetch(`http://localhost:5000/deleteSeedmoney/${seedmoneyId}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete seedmoney');
+            }
+
+            setSeedMoneyApplications(seedMoneyApplications.filter(app => app.id !== seedmoneyId));
+            alert("Seedmoney deleted successfully!");
+        } catch (error) {
+            console.error('Error deleting seedmoney:', error);
+            alert("Failed to delete the seedmoney.");
+        }
+    };
+
 
     return (
         <div className="container mt-2">
@@ -57,7 +78,12 @@ const SeedMoneyPage = () => {
                                             {app.projectTitle}
                                         </a>
                                     </h5>
+                                    <div className="d-flex gap-2">
                                     <button className="btn btn-warning mt-2" onClick={() => handleEdit(app)}>Edit</button>
+                                    <button className="btn btn-danger mt-2" onClick={() => handleDelete(app.id)}>
+                                                Delete
+                                            </button>
+                                            </div>
                                     </div>
 
                                     {visibleDetails === app.id && (

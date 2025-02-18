@@ -30,6 +30,27 @@ const ConsultancyProjectsPage = () => {
     const handleEdit = (project) => {
         navigate('/editconsultancy', { state: { project } });
     };
+    
+    const handleDelete = async (consultancy_id) => {
+        const confirmDelete = window.confirm("Are you sure you want to delete this Consultancy?");
+        if (!confirmDelete) return;
+
+        try {
+            const response = await fetch(`http://localhost:5000/deleteConsultancy/${consultancy_id}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete consultancy');
+            }
+
+            setConsultancyProjects(consultancyProjects.filter(project => project.consultancy_id !== consultancy_id));
+            alert("Consultancy deleted successfully!");
+        } catch (error) {
+            console.error('Error deleting consultancy:', error);
+            alert("Failed to delete the consultancy.");
+        }
+    };
 
     return (
         <div className="container mt-2">
@@ -51,12 +72,17 @@ const ConsultancyProjectsPage = () => {
                                             {project.titleofconsultancy}
                                         </a>
                                     </h5>
+                                    <div className="d-flex gap-2">
                                     <button 
                                         className="btn btn-warning mt-2" 
                                         onClick={() => handleEdit(project)}
                                     >
                                         Edit
                                     </button>
+                                        <button className="btn btn-danger mt-2" onClick={() => handleDelete(project.consultancy_id)}>
+                                                Delete
+                                            </button>
+                                            </div>
                                     </div>
                                     {visibleDetails === project.consultancy_id && (
                                         <div className="overflow-auto" style={{ maxHeight: '250px' }}>

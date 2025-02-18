@@ -36,6 +36,7 @@ const FacultySignupPage = () => {
     orcid: "",
     google_scholar_id: "",
     vidwan_portal: "",
+    researcherid:"",
     password1:""
   });
   const navigate=useNavigate();
@@ -101,7 +102,7 @@ const FacultySignupPage = () => {
     const validatePhoneNumber = (phoneNumber) =>
         /^[7-9][0-9]{9}$/.test(phoneNumber.trim());
 
-    const validateName = (name) => /^[a-zA-Z\s]+$/.test(name);
+    const validateName = (name) => /^[a-zA-Z\s.]+$/.test(name);
 
     const validateDate = (date) =>
         /^\d{4}-\d{2}-\d{2}$/.test(date); // YYYY-MM-DD format
@@ -112,17 +113,8 @@ const FacultySignupPage = () => {
     const validateYear = (year) =>
         /^\d{4}$/.test(year) && parseInt(year) >= 1900 && parseInt(year) <= new Date().getFullYear();
 
-    const validateOrcid = (orcid) =>
-        /^\d{4}-\d{4}-\d{4}-\d{4}$/.test(orcid);
-
     const validateCourseNetworkId = (courseNetworkId) =>
         /^[a-zA-Z0-9-]+$/.test(courseNetworkId);
-
-    const validateScopusId = (id) =>
-        /^[a-zA-Z0-9]+$/.test(id); // Scopus ID format: alphanumeric
-
-    const validateGoogleScholarId = (id) =>
-        /^[a-zA-Z0-9-]+$/.test(id);
 
     switch (fieldName) {
         case "institute_name":
@@ -161,7 +153,7 @@ const FacultySignupPage = () => {
 
         case "guide_name":
             error = !value || !validateName(value)
-                ? "Guide name must only contain alphabets and spaces."
+                ? "Guide name must only contain alphabets,dots and spaces."
                 : "";
             break;
 
@@ -181,28 +173,16 @@ const FacultySignupPage = () => {
 
         case "faculty_profile_weblink":
         case "vidwan_portal":
+        case "researcherid":
+        case "orcid":
+        case "scopus_id":
+        case "google_scholar_id":
             if (value && !validateUrl(value))
                 error = "Invalid URL format.";
             break;
-
-        case "orcid":
-            if (value && !validateOrcid(value))
-                error = "Invalid ORCID format.";
-            break;
-
         case "course_network_id":
             if (value && !validateCourseNetworkId(value))
                 error = "Invalid Course Network ID. It should be alphanumeric with optional dashes.";
-            break;
-
-        case "scopus_id":
-            if (value && !validateScopusId(value))
-                error = "Invalid Scopus ID. It should be alphanumeric.";
-            break;
-
-        case "google_scholar_id":
-            if (value && !validateGoogleScholarId(value))
-                error = "Invalid Google Scholar ID. It should be alphanumeric with optional dashes.";
             break;
 
         case "total_experience":
@@ -238,7 +218,7 @@ const FacultySignupPage = () => {
           "guide_name", "guide_phone_number", "guide_mail_id", "guide_department",
           "date_of_joining_svecw", "experience_in_svecw", "previous_teaching_experience",
           "total_experience", "industry_experience", "ratified", "official_mail_id",
-          "phone_number", "course_network_id", "faculty_profile_weblink", "vidwan_portal",
+          "phone_number", "course_network_id", "faculty_profile_weblink", "vidwan_portal","researcherid",
           "password1"
       ];
 
@@ -358,15 +338,14 @@ const FacultySignupPage = () => {
                 className="form-control"
               >
                 <option value="">Select Department</option>
-                <option value="cse">CSE</option>
-                <option value="aiml">AIML</option>
-                <option value="aids">AIDS</option>
-                <option value="it">IT</option>
-                <option value="cs">CS</option>
-                <option value="eee">EEE</option>
-                <option value="ece">ECE</option>
-                <option value="civil">Civil</option>
-                <option value="me">ME</option>
+                <option value="cse">COMPUTER SCIENCE AND ENGINEERING</option>
+                <option value="ai">ARTIFICIAL INTELLIGENCE</option>
+                <option value="it">INFORMATION TECHNOLOGY</option>
+                <option value="cs">CYBER SECURITY</option>
+                <option value="eee">ELECTRICAL AND ELECTRONICS ENGINEERING</option>
+                <option value="ece">ELECTRONICS AND COMMUNICATION ENGINEERING</option>
+                <option value="civil">CIVIL ENGINEERING</option>
+                <option value="me">MECHANICAL ENGINEERING</option>
               </select>
               {errors.department && <div className="text-danger">{errors.department}</div>}
             </div>
@@ -437,11 +416,12 @@ const FacultySignupPage = () => {
                 
               >
                 <option value="">Select Qualification</option>
-                <option value="M.Tech.">M.Tech.</option>
-                <option value="Ph.D.">Ph.D.</option>
-                <option value="Ph.D. (pursuing)">Ph.D. (pursuing)</option>
-                <option value="M.Sc.">M.Sc.</option>
-                <option value="M.Phil">M.Phil.</option>
+                <option value="M.Tech">M.Tech</option>
+                <option value="MBA">MBA</option>
+                <option value="Ph.D">Ph.D</option>
+                <option value="Ph.D (pursuing)">Ph.D (pursuing)</option>
+                <option value="M.Sc">M.Sc</option>
+                <option value="M.Phil">M.Phil</option>
               </select>
               {errors.qualification && <div className="text-danger">{errors.qualification}</div>}
             </div>
@@ -673,7 +653,7 @@ const FacultySignupPage = () => {
                   {errors.phone_number && <div className="text-danger">{errors.phone_number}</div>}
                 </div>
                 <div className="col-md-4">
-                  <label className="form-label">Course Network ID/Link<span style={{ color: "red" }}>*</span></label>
+                  <label className="form-label">Course Network ID<span style={{ color: "red" }}>*</span></label>
                   <input
                     type="text"
                     className="form-control"
@@ -742,6 +722,19 @@ const FacultySignupPage = () => {
                 />
                 {errors.vidwan_portal && <div className="text-danger">{errors.vidwan_portal}</div>}
               </div>
+
+              <div className="col-md-4">
+                <label className="form-label ">Researcher Id</label>
+                <input
+                  type="text"
+                  className="form-control "
+                  name="researcherid"
+                  value={formData.researcherid}
+                  onChange={handleChange}
+                />
+                {errors.researcherid && <div className="text-danger">{errors.researcherid}</div>}
+              </div>
+
               <div className="col-md-4">
                 <label className="form-label">Password<span style={{ color: "red" }}>*</span></label>
                 <input

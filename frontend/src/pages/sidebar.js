@@ -1,12 +1,11 @@
 import React, { useState, useRef, useLayoutEffect } from "react";
-import { BsChevronDown, BsChevronUp, BsChevronLeft, BsChevronRight } from "react-icons/bs";
-import { Link, useNavigate } from "react-router-dom";
+import { BsChevronDown, BsChevronUp, BsChevronLeft, BsChevronRight, BsHouse } from "react-icons/bs";
+import { Link } from "react-router-dom";
 
-const DropdownMenu = ({ title, items, isOpen, setOpenDropdown, isHome }) => {
+const DropdownMenu = ({ title, items, isOpen, setOpenDropdown }) => {
   const buttonRef = useRef(null);
   const dropdownRef = useRef(null);
   const [dropdownStyle, setDropdownStyle] = useState({ visibility: "hidden" });
-  const navigate = useNavigate();
 
   useLayoutEffect(() => {
     if (isOpen && buttonRef.current) {
@@ -23,7 +22,7 @@ const DropdownMenu = ({ title, items, isOpen, setOpenDropdown, isHome }) => {
         zIndex: 1050,
         border: "1px solid #ddd",
         whiteSpace: "nowrap",
-        visibility: "visible",
+        visibility: "visible", // Prevents flickering
       });
     }
   }, [isOpen]);
@@ -48,7 +47,7 @@ const DropdownMenu = ({ title, items, isOpen, setOpenDropdown, isHome }) => {
     <div style={{ position: "relative", margin: "0 15px", flexShrink: 0 }}>
       <button
         ref={buttonRef}
-        onClick={() => (isHome ? navigate("/home") : setOpenDropdown(isOpen ? null : title))}
+        onClick={() => setOpenDropdown(isOpen ? null : title)}
         style={{
           background: "none",
           border: "none",
@@ -60,10 +59,10 @@ const DropdownMenu = ({ title, items, isOpen, setOpenDropdown, isHome }) => {
           color: "#2E8BC0",
         }}
       >
-        {title} {!isHome && (isOpen ? <BsChevronUp /> : <BsChevronDown />)}
+        {title} {isOpen ? <BsChevronUp /> : <BsChevronDown />}
       </button>
 
-      {!isHome && isOpen && (
+      {isOpen && title !== "Profile" && (
         <div ref={dropdownRef} style={dropdownStyle}>
           {items.map((item, index) => (
             <Link
@@ -96,14 +95,14 @@ const Topbar = () => {
   const menuRef = useRef(null);
 
   const sections = [
-    { title: "Home", isHome: true },
-    { title: "Publications", items: ["Add Publication", "View Publications"] },
-    { title: "Patents", items: ["Add Patent", "View Patents"] },
-    { title: "Seed Money", items: ["Add Seed Money", "View Seed Money"] },
-    { title: "External Funded Projects", items: ["Add Project", "View Projects"] },
-    { title: "Consultancy", items: ["Add Consultant", "View Consultants"] },
-    { title: "Research Scholars", items: ["Add Scholar", "View Scholars"] },
-    { title: "Proposals Submitted", items: ["Add Proposal", "View Proposals"] },
+    { title: "Profile", items: [] },
+    { title: "Publications", items: ["Add Publication","View Publications"] },
+    { title: "Patents", items: ["Add Patent","View Patents"] },
+    { title: "Seed Money", items: ["Add Seed Money","View Seed Money"] },
+    { title: "External Funded Projects", items: ["Add Project","View Projects"] },
+    { title: "Consultancy", items: ["Add Consultant","View Consultants"] },
+    { title: "Research Scholars", items: ["Add Scholar","View Scholars"] },
+    { title: "Proposals Submitted", items: ["Add Proposal","View Proposals"] },
   ];
 
   const scrollMenu = (direction) => {
@@ -132,8 +131,9 @@ const Topbar = () => {
         justifyContent: "space-between",
       }}
     >
-      <button
-        onClick={() => scrollMenu("left")}
+      {/* Home Button */}
+      <Link
+        to="/home"
         style={{
           background: "none",
           border: "none",
@@ -144,6 +144,13 @@ const Topbar = () => {
           alignItems: "center",
           color: "#000",
         }}
+      >
+        <BsHouse style={{ strokeWidth: "1px" }} />
+      </Link>
+
+      <button
+        onClick={() => scrollMenu("left")}
+        style={{ background: "none", border: "none", cursor: "pointer", fontSize: "24px", padding: "5px", display: "flex", alignItems: "center", color: "#000" }}
       >
         <BsChevronLeft style={{ strokeWidth: "1px" }} />
       </button>
@@ -153,7 +160,7 @@ const Topbar = () => {
         style={{
           display: "flex",
           overflow: "hidden",
-          maxWidth: "80vw",
+          maxWidth: "85vw",
           whiteSpace: "nowrap",
           scrollBehavior: "smooth",
           flexGrow: 1,
@@ -161,29 +168,38 @@ const Topbar = () => {
         }}
       >
         {sections.map((section) => (
-          <DropdownMenu
-            key={section.title}
-            title={section.title}
-            items={section.items}
-            isOpen={openDropdown === section.title}
-            setOpenDropdown={setOpenDropdown}
-            isHome={section.isHome}
-          />
+          <div key={section.title} style={{ position: "relative", margin: "0 15px", flexShrink: 0 }}>
+            {section.title === "Profile" ? (
+  <Link
+    to="/profile"
+    style={{
+      fontSize: "16px",
+      fontWeight: "600",
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      color: "#2E8BC0",
+      textDecoration: "none", // Added to remove underline
+    }}
+  >
+    Profile
+  </Link>
+) : (
+  <DropdownMenu
+    title={section.title}
+    items={section.items}
+    isOpen={openDropdown === section.title}
+    setOpenDropdown={setOpenDropdown}
+  />
+)}
+
+          </div>
         ))}
       </div>
 
       <button
         onClick={() => scrollMenu("right")}
-        style={{
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          fontSize: "24px",
-          padding: "5px",
-          display: "flex",
-          alignItems: "center",
-          color: "#000",
-        }}
+        style={{ background: "none", border: "none", cursor: "pointer", fontSize: "24px", padding: "5px", display: "flex", alignItems: "center", color: "#000" }}
       >
         <BsChevronRight style={{ strokeWidth: "1px" }} />
       </button>

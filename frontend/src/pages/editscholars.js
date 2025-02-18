@@ -22,7 +22,7 @@ const EditScholar = () => {
 
         university: scholarData.university || '',
         admissionStatus: scholarData.admissionStatus || '',
-        awardDate: scholarData.awardDate || '',
+        awardDate: scholarData.awardDate? formatDate(scholarData.awardDate) :'',
         fellowship: scholarData.fellowship || '',
         admissionLetter: scholarData.admissionLetter || null,
         guideAllotmentLetter: scholarData.guideAllotmentLetter || null,
@@ -114,9 +114,7 @@ const EditScholar = () => {
                             {formData[key] && (
                                 <p>
                                   
-                                    <a href={`http://localhost:5000/${formData[key]}`} target="_blank" rel="noopener noreferrer">
-            View 
-        </a>
+                                    <a href={`http://localhost:5000/${formData[key]}`} target="_blank" rel="noopener noreferrer">View </a>
                                 </p>
                             )}
 

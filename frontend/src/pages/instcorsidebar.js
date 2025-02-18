@@ -1,5 +1,5 @@
 import React, { useState, useRef, useLayoutEffect } from "react";
-import { BsChevronDown, BsChevronUp, BsChevronLeft, BsChevronRight } from "react-icons/bs";
+import { BsChevronDown, BsChevronUp, BsChevronLeft, BsChevronRight, BsHouse } from "react-icons/bs";
 import { Link } from "react-router-dom";
 
 const DropdownMenu = ({ title, items, isOpen, setOpenDropdown }) => {
@@ -130,6 +130,23 @@ const Topbar = () => {
         justifyContent: "space-between",
       }}
     >
+      {/* Home Button */}
+      <Link
+        to="/instcorwelcome"
+        style={{
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          fontSize: "24px",
+          padding: "5px",
+          display: "flex",
+          alignItems: "center",
+          color: "#000",
+        }}
+      >
+        <BsHouse style={{ strokeWidth: "1px" }} />
+      </Link>
+
       <button
         onClick={() => scrollMenu("left")}
         style={{ background: "none", border: "none", cursor: "pointer", fontSize: "24px", padding: "5px", display: "flex", alignItems: "center", color: "#000" }}

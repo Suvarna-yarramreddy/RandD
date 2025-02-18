@@ -37,6 +37,27 @@ const FundedProjectsPage = () => {
     const handleEdit = (project) => {
         navigate('/editexternal', { state: { project } });
     };
+    const handleDelete = async (externalId) => {
+        const confirmDelete = window.confirm("Are you sure you want to delete this fundedproject?");
+        if (!confirmDelete) return;
+
+        try {
+            const response = await fetch(`http://localhost:5000/deletefundedproject/${externalId}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete fundedproject');
+            }
+
+            setProjects(projects.filter(proj => proj.id !== externalId));
+            alert("Funded project deleted successfully!");
+        } catch (error) {
+            console.error('Error deleting funded project:', error);
+            alert("Failed to delete the funded project.");
+        }
+    };
+
 
     if (loading) {
         return <div className="text-center">Loading...</div>;
@@ -67,9 +88,14 @@ const FundedProjectsPage = () => {
                                                 {proj.title}
                                             </a>
                                         </h5>
+                                        <div className="d-flex gap-2">
                                         <button className="btn btn-warning mt-2" onClick={() => handleEdit(proj)}>Edit</button>
+                                        <button className="btn btn-danger mt-2" onClick={() => handleDelete(proj.id)}>
+                                                Delete
+                                            </button>
+                                            </div>
                                         </div>
-                                        
+                                                                                
                                         <div className="text-right">
                                             <strong>Status:</strong>
                                             <span className="text-dark ms-2">{proj.status}</span>

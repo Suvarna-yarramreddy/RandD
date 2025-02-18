@@ -46,6 +46,9 @@ import InstViewProposals from './pages/instviewproposals';
 import EditFundedProjectPage from './pages/editexternal';
 import EditConsultancyProject from './pages/editconsultancy';
 import EditProposal from './pages/editproposal';
+import FacultyDetails from './pages/facultyprofile';
+import EditFacultyDetails from './pages/editfacultyprofile';
+import InstituteDashboard from './pages/instcorwelcome';
 const App = () => {
   return (
     <Router>
@@ -95,6 +98,9 @@ const App = () => {
           <Route path="/editexternal" element={<EditFundedProjectPage/>}/>
           <Route path="/editconsultancy" element={<EditConsultancyProject/>}/>
           <Route path="/editproposal" element={<EditProposal/>}/>
+          <Route path="/profile" element={<FacultyDetails/>}/>
+          <Route path="/editprofile" element={<EditFacultyDetails/>}/>
+          <Route path="/instcorwelcome" element={<InstituteDashboard/>}/>
         </Routes>
       </Layout>
     </Router>

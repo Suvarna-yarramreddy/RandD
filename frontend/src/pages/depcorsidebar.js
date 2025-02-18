@@ -1,12 +1,11 @@
 import React, { useState, useRef, useLayoutEffect } from "react";
-import { BsChevronDown, BsChevronUp, BsChevronLeft, BsChevronRight } from "react-icons/bs";
-import { Link, useNavigate } from "react-router-dom";
+import { BsChevronDown, BsChevronUp, BsChevronLeft, BsChevronRight, BsHouse } from "react-icons/bs";
+import { Link } from "react-router-dom";
 
-const DropdownMenu = ({ title, items, isOpen, setOpenDropdown, isHome }) => {
+const DropdownMenu = ({ title, items, isOpen, setOpenDropdown }) => {
   const buttonRef = useRef(null);
   const dropdownRef = useRef(null);
   const [dropdownStyle, setDropdownStyle] = useState({ visibility: "hidden" });
-  const navigate = useNavigate();
 
   useLayoutEffect(() => {
     if (isOpen && buttonRef.current) {
@@ -23,7 +22,7 @@ const DropdownMenu = ({ title, items, isOpen, setOpenDropdown, isHome }) => {
         zIndex: 1050,
         border: "1px solid #ddd",
         whiteSpace: "nowrap",
-        visibility: "visible",
+        visibility: "visible", // Prevents flickering
       });
     }
   }, [isOpen]);
@@ -48,7 +47,7 @@ const DropdownMenu = ({ title, items, isOpen, setOpenDropdown, isHome }) => {
     <div style={{ position: "relative", margin: "0 15px", flexShrink: 0 }}>
       <button
         ref={buttonRef}
-        onClick={() => (isHome ? navigate("/coordinatorwelcome") : setOpenDropdown(isOpen ? null : title))}
+        onClick={() => setOpenDropdown(isOpen ? null : title)}
         style={{
           background: "none",
           border: "none",
@@ -60,15 +59,15 @@ const DropdownMenu = ({ title, items, isOpen, setOpenDropdown, isHome }) => {
           color: "#2E8BC0",
         }}
       >
-        {title} {!isHome && (isOpen ? <BsChevronUp /> : <BsChevronDown />)}
+        {title} {isOpen ? <BsChevronUp /> : <BsChevronDown />}
       </button>
 
-      {!isHome && isOpen && (
+      {isOpen && (
         <div ref={dropdownRef} style={dropdownStyle}>
           {items.map((item, index) => (
             <Link
               key={index}
-              to={`/cor${item.replace(/\s+/g, "").toLowerCase()}`} // Prefixing 'cor' to routes
+              to={`/cor${item.replace(/\s+/g, "").toLowerCase()}`}  // Adding 'cor' prefix to the route
               style={{
                 display: "block",
                 padding: "8px 12px",
@@ -96,11 +95,10 @@ const Topbar = () => {
   const menuRef = useRef(null);
 
   const sections = [
-    { title: "Home", isHome: true }, // Added Home button
     { title: "Publications", items: ["View Publications"] },
-    { title: "Patents", items: ["View Patents"] },
+    { title: "Patents", items: [ "View Patents"] },
     { title: "Seed Money", items: ["View Seed Money"] },
-    { title: "External Funded Projects", items: ["View Projects"] },
+    { title: "External Funded Projects", items: [ "View Projects"] },
     { title: "Consultancy", items: ["View Consultants"] },
     { title: "Research Scholars", items: ["View Scholars"] },
     { title: "Proposals Submitted", items: ["View Proposals"] },
@@ -132,6 +130,23 @@ const Topbar = () => {
         justifyContent: "space-between",
       }}
     >
+      {/* Home Button */}
+      <Link
+        to="/coordinatorwelcome"
+        style={{
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          fontSize: "24px",
+          padding: "5px",
+          display: "flex",
+          alignItems: "center",
+          color: "#000",
+        }}
+      >
+        <BsHouse style={{ strokeWidth: "1px" }} />
+      </Link>
+
       <button
         onClick={() => scrollMenu("left")}
         style={{ background: "none", border: "none", cursor: "pointer", fontSize: "24px", padding: "5px", display: "flex", alignItems: "center", color: "#000" }}
@@ -152,14 +167,7 @@ const Topbar = () => {
         }}
       >
         {sections.map((section) => (
-          <DropdownMenu
-            key={section.title}
-            title={section.title}
-            items={section.items}
-            isOpen={openDropdown === section.title}
-            setOpenDropdown={setOpenDropdown}
-            isHome={section.isHome}
-          />
+          <DropdownMenu key={section.title} title={section.title} items={section.items} isOpen={openDropdown === section.title} setOpenDropdown={setOpenDropdown} />
         ))}
       </div>
 

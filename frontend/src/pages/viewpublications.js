@@ -38,6 +38,27 @@ const PublicationsPage = () => {
     const handleEditClick = (pub) => {
         navigate('/editpublications', { state: { publication: pub } }); // Updated navigation
     };
+    const handleDelete = async (publicationId) => {
+        const confirmDelete = window.confirm("Are you sure you want to delete this publication?");
+        if (!confirmDelete) return;
+
+        try {
+            const response = await fetch(`http://localhost:5000/deletePublication/${publicationId}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete publication');
+            }
+
+            setPublications(publications.filter(pub => pub.publication_id !== publicationId));
+            alert("Publication deleted successfully!");
+        } catch (error) {
+            console.error('Error deleting publication:', error);
+            alert("Failed to delete the publication.");
+        }
+    };
+
 
     return (
         <div className="container mt-2">
@@ -60,6 +81,9 @@ const PublicationsPage = () => {
                                                 {pub.citeAs}
                                             </a>
                                         </h5>
+                                        <button className="btn btn-danger mt-2" onClick={() => handleDelete(pub.publication_id)}>
+                                                Delete
+                                            </button>
                                         {pub.status === 'Rejected by Department R&D Coordinator' && (
                                                 <button
                                                     className="btn btn-warning mt-2"

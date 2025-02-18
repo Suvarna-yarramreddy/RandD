@@ -39,6 +39,26 @@ const ViewProposals = () => {
         navigate("/editproposal",{ state: {proposal } }); // Pass ID as route parameter
     };
 
+    const handleDelete = async (id) => {
+        const confirmDelete = window.confirm("Are you sure you want to delete this Project Proposal?");
+        if (!confirmDelete) return;
+
+        try {
+            const response = await fetch(`http://localhost:5000/deleteproposal/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete proposal');
+            }
+
+            setProposals(proposals.filter(proj => proj.id !== id));
+            alert("Project proposal deleted successfully!");
+        } catch (error) {
+            console.error('Error deleting proposal:', error);
+            alert("Failed to delete the project proposal.");
+        }
+    };
     if (loading) {
         return <div className="text-center">Loading...</div>;
     }
@@ -68,10 +88,14 @@ const ViewProposals = () => {
                                                 {prop.projectTitle}
                                             </a>
                                         </h5>
-                                       
+                                        <div className="d-flex gap-2">
                                         <button className="btn btn-warning mt-2" onClick={() => handleEdit(prop)}>
                                                 Edit
                                             </button>
+                                            <button className="btn btn-danger mt-2" onClick={() => handleDelete(prop.id)}>
+                                                Delete
+                                            </button>
+                                            </div>
                                     </div>
                                     {visibleDetails === prop.id && (
                                         <div className="card-details overflow-auto" style={{ maxHeight: '250px' }}>

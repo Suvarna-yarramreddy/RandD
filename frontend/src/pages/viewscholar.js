@@ -38,6 +38,27 @@ const ViewScholars = () => {
         navigate('/editscholar', { state: { scholar } });
     };
 
+    const handleDelete = async (id) => {
+        const confirmDelete = window.confirm("Are you sure you want to delete this Research Scholar?");
+        if (!confirmDelete) return;
+
+        try {
+            const response = await fetch(`http://localhost:5000/deleteScholar/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete scholar');
+            }
+
+            setScholars(scholars.filter(app => app.id !==id));
+            alert("Research Scholar deleted successfully!");
+        } catch (error) {
+            console.error('Error deleting scholar:', error);
+            alert("Failed to delete the scholar.");
+        }
+    };
+
     if (loading) {
         return <div className="text-center">Loading...</div>;
     }
@@ -68,10 +89,14 @@ const ViewScholars = () => {
                                                 {scholar.workTitle}
                                             </a>
                                         </h5>
+                                        <div className="d-flex gap-2">
                                             <button className="btn btn-warning mt-2" onClick={() => handleEditClick(scholar)}>
                                                 Edit
                                             </button>
-                                
+                                            <button className="btn btn-danger mt-2" onClick={() => handleDelete(scholar.id)}>
+                                                Delete
+                                            </button>
+                                            </div>
                                         </div>
                                         
                                     </div>

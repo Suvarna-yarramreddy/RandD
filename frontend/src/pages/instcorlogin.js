@@ -39,7 +39,7 @@ const LoginInstCoordinator = () => {
           sessionStorage.setItem("role", "institutecoordinator");
 
           // Redirect to dashboard
-          navigate("/instdashboard");
+          navigate("/instcorwelcome");
         } else {
           setErrorMessage("Invalid credentials.");
         }
