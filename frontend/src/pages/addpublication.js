@@ -111,7 +111,14 @@ const AddPublicationPage = () => {
         case "proofOfPublication":
           if (!value) error = "Please upload proof of publication.";
         break;
-
+        case "quartile":
+    case "impactFactor":
+      if (formData.typeOfPublication === "Journal") {
+        if (!value) {
+          error = `${key === "quartile" ? "Quartile" : "Impact Factor"} is required for Journal publications.`;
+        }
+      }
+      break;
       default:
         if (!value && key !== "volume" && key !== "pageNo"){
            error = `Please fill out the ${key.replace(/([A-Z])/g, " $1").toLowerCase()}.`;
@@ -221,7 +228,7 @@ const handleSubmit = async (e) => {
   
   return (
     <div className="container mt-2">
-      <h2 className="text-center text-dark mb-4">Add Publication Details</h2>
+      <h2 className="text-center text-dark mb-4">Add Publication</h2>
       <form onSubmit={handleSubmit}>
         {/* Row 1 - Nature of Publication and Type of Publication */}
         <div className="row">
@@ -411,48 +418,6 @@ const handleSubmit = async (e) => {
                 {errors.indexed && <div className="text-danger">{errors.indexed}</div>}
               </div>
               <div className="col-md-6 mb-3">
-                <label className="form-label">Quartile<span style={{ color: "red" }}>*</span></label>
-                <select
-                  name="quartile"
-                  className="form-select"
-                  onChange={handleInputChange}
-                  value={formData.quartile}
-                >
-                  <option value="">Select Quartile</option>
-                  <option value="Q1">Q1</option>
-                  <option value="Q2">Q2</option>
-                  <option value="Q3">Q3</option>
-                  <option value="Q4">Q4</option>
-                  <option value="N/A">N/A</option>
-                </select>
-                {errors.quartile && <div className="text-danger">{errors.quartile}</div>}
-              </div>
-            </div>
-
-            {/* Row 7 - Impact Factor and DOI */}
-            <div className="row">
-              <div className="col-md-6 mb-3">
-              <label className="form-label">
-                    Impact Factor{" "}
-                    <a 
-                      href="https://www.bioxbio.com/" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      style={{ marginLeft: "5px", textDecoration: "none", color: "blue" }}
-                    >
-                      (https://www.bioxbio.com/)
-                    </a><span style={{ color: "red" }}>*</span>
-                  </label>
-                <input
-                  type="text"
-                  name="impactFactor"
-                  className="form-control"
-                  onChange={handleInputChange}
-                  value={formData.impactFactor}
-                />
-                {errors.impactFactor && <div className="text-danger">{errors.impactFactor}</div>}
-              </div>
-              <div className="col-md-6 mb-3">
                 <label className="form-label">DOI<span style={{ color: "red" }}>*</span></label>
                 <input
                   type="text"
@@ -463,7 +428,55 @@ const handleSubmit = async (e) => {
                 />
                 {errors.doi && <div className="text-danger">{errors.doi}</div>}
               </div>
-            </div>
+              </div>
+              
+            {/* Row 6 - Indexed and Quartile (Only for Journal) */}
+            {formData.typeOfPublication === "Journal" && (
+                <div className="row">
+                  {/* Quartile */}
+                  <div className="col-md-6 mb-3">
+                    <label className="form-label">Quartile<span style={{ color: "red" }}>*</span></label>
+                    <select
+                      name="quartile"
+                      className="form-select"
+                      onChange={handleInputChange}
+                      value={formData.quartile}
+                    >
+                      <option value="">Select Quartile</option>
+                      <option value="Q1">Q1</option>
+                      <option value="Q2">Q2</option>
+                      <option value="Q3">Q3</option>
+                      <option value="Q4">Q4</option>
+                      <option value="N/A">N/A</option>
+                    </select>
+                    {errors.quartile && <div className="text-danger">{errors.quartile}</div>}
+                  </div>
+
+                  {/* Impact Factor */}
+                  <div className="col-md-6 mb-3">
+                    <label className="form-label">
+                      Impact Factor{" "}
+                      <a
+                        href="https://www.bioxbio.com/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ marginLeft: "5px", textDecoration: "none", color: "blue" }}
+                      >
+                        (https://www.bioxbio.com/)
+                      </a><span style={{ color: "red" }}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="impactFactor"
+                      className="form-control"
+                      onChange={handleInputChange}
+                      value={formData.impactFactor}
+                    />
+                    {errors.impactFactor && <div className="text-danger">{errors.impactFactor}</div>}
+                  </div>
+                </div>
+              )}
+
 
             {/* Row 8 - Link of Paper and Scopus Link */}
             <div className="row">
@@ -531,7 +544,7 @@ const handleSubmit = async (e) => {
                 {errors.monthYear && <div className="text-danger">{errors.monthYear}</div>}
               </div>
               <div className="col-md-6 mb-3">
-                <label className="form-label">Cite As<span style={{ color: "red" }}>*</span></label>
+                <label className="form-label">Cite As(IEEE format)<span style={{ color: "red" }}>*</span></label>
                 <input
                   type="text"
                   name="citeAs"

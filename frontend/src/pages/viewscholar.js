@@ -69,7 +69,7 @@ const ViewScholars = () => {
 
     return (
         <div className="container mt-2">
-            <h2 className="text-center text-dark mb-4">Research Scholars</h2>
+            <h2 className="text-center text-dark mb-4">Your Research Scholars</h2>
             {scholars.length > 0 ? (
                 <div className="row">
                     {scholars.map((scholar) => (

@@ -1,12 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 const InstViewScholars = () => {
     const [scholars, setScholars] = useState([]);
     const [visibleDetails, setVisibleDetails] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
     useEffect(() => {
         const fetchScholars = async () => {
             try {
@@ -18,9 +14,7 @@ const InstViewScholars = () => {
                 const data = await response.json();
                 setScholars(data);
             } catch (err) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
+                console.log(err.message);
             }
         };
 
@@ -31,17 +25,11 @@ const InstViewScholars = () => {
         setVisibleDetails(visibleDetails === id ? null : id);
     };
 
-    if (loading) {
-        return <div className="text-center">Loading...</div>;
-    }
 
-    if (error) {
-        return <div className="text-center text-danger">{error}</div>;
-    }
 
     return (
         <div className="container mt-2">
-            <h2 className="text-center text-dark mb-4">Research Scholars</h2>
+            <h2 className="text-center text-dark mb-4">Institute-Wise Research Scholars</h2>
             {scholars.length > 0 ? (
                 <div className="row">
                     {scholars.map((scholar) => (

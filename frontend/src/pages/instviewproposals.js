@@ -3,9 +3,6 @@ import React, { useState, useEffect } from 'react';
 const InstViewProposals = () => {
     const [proposals, setProposals] = useState([]);
     const [visibleDetails, setVisibleDetails] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
 
     useEffect(() => {
         const fetchProposals = async () => {
@@ -18,10 +15,8 @@ const InstViewProposals = () => {
                 const data = await response.json();
                 setProposals(data);
             } catch (err) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
+                console.log(err.message);
+            } 
         };
 
         fetchProposals();
@@ -31,17 +26,10 @@ const InstViewProposals = () => {
         setVisibleDetails(visibleDetails === id ? null : id);
     };
 
-    if (loading) {
-        return <div className="text-center">Loading...</div>;
-    }
-
-    if (error) {
-        return <div className="text-center text-danger">{error}</div>;
-    }
 
     return (
         <div className="container mt-2">
-            <h2 className="text-center text-dark mb-4">Department Project Proposals</h2>
+            <h2 className="text-center text-dark mb-4">Institute-Wise Proposals</h2>
             {proposals.length > 0 ? (
                 <div className="row">
                     {proposals.map((proposal) => (

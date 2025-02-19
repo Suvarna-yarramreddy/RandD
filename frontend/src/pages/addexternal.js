@@ -276,7 +276,7 @@ const ExternalFunded = () => {
 
   return (
     <div className="container mt-2">
-      <h2 className="text-center text-dark mb-4">External Funded Projects</h2>
+      <h2 className="text-center text-dark mb-4">Add External Funded Projects</h2>
       <form onSubmit={handleSubmit}>
         <div className="row">
           {/* General Information */}

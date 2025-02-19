@@ -77,9 +77,8 @@ const PatentsPage = () => {
                                             {pat.inventionTitle}
                                         </a>
                                     </h5>
-                                    <button className="btn btn-danger mt-2" onClick={() => handleDelete(pat.patent_id)}>
-                                                Delete
-                                            </button>
+                                    <div className="d-flex gap-2">
+                                    
                                     {pat.status === 'Rejected by Department R&D Coordinator' && (
                                                 <button
                                                     className="btn btn-warning mt-2"
@@ -96,6 +95,10 @@ const PatentsPage = () => {
                                                     Edit
                                                 </button>
                                             )}
+                                            <button className="btn btn-danger mt-2" onClick={() => handleDelete(pat.patent_id)}>
+                                                Delete
+                                            </button>
+                                            </div>
                                             </div>
                                     <div className="text-right">
                                             <strong>Status:</strong>

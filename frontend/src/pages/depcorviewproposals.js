@@ -3,8 +3,7 @@ import React, { useState, useEffect } from 'react';
 const CorViewProposals = () => {
     const [proposals, setProposals] = useState([]);
     const [visibleDetails, setVisibleDetails] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+  
 
     // Get the coordinator ID from session storage
     const coordinator_id = sessionStorage.getItem("coordinatorid");
@@ -20,9 +19,7 @@ const CorViewProposals = () => {
                 const data = await response.json();
                 setProposals(data);
             } catch (err) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
+                console.log(err.message);
             }
         };
 
@@ -33,17 +30,11 @@ const CorViewProposals = () => {
         setVisibleDetails(visibleDetails === id ? null : id);
     };
 
-    if (loading) {
-        return <div className="text-center">Loading...</div>;
-    }
-
-    if (error) {
-        return <div className="text-center text-danger">{error}</div>;
-    }
+  
 
     return (
         <div className="container mt-2">
-            <h2 className="text-center text-dark mb-4">Department Project Proposals</h2>
+            <h2 className="text-center text-dark mb-4">Department-Wise Proposals</h2>
             {proposals.length > 0 ? (
                 <div className="row">
                     {proposals.map((proposal) => (

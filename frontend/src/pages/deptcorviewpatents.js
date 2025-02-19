@@ -96,7 +96,7 @@ const CorViewPatents = () => {
 
     return (
         <div className="container mt-2">
-            <h2 className="text-center text-dark mb-4">Patents Pending Approval</h2>
+            <h2 className="text-center text-dark mb-4">Department-Wise Patents</h2>
             {patents.length > 0 ? (
                 <div className="row">
                     {patents.map(pat => (

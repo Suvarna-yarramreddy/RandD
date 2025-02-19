@@ -270,7 +270,7 @@ const handleSubmit = async (e) => {
 
   return (
     <div className="container mt-2">
-      <h2 className="text-center text-dark mb-4">Seed Money Application</h2>
+      <h2 className="text-center text-dark mb-4">Add Seed Money</h2>
       <form onSubmit={handleSubmit}  method="POST" encType="multipart/form-data">
         <div className="row">
           <div className="col-md-6 mb-3">

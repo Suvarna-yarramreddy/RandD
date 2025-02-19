@@ -28,7 +28,7 @@ const InstFundedProjects = () => {
 
     return (
         <div className="container mt-2">
-            <h2 className="text-center text-dark mb-4">Institute-Wise Externally Funded Projects</h2>
+            <h2 className="text-center text-dark mb-4">Institute-Wise External Funded Projects</h2>
             {projects.length > 0 ? (
                 <div className="row">
                     {projects.map((proj) => (

@@ -82,7 +82,7 @@ const InstituteCorViewPublications = () => {
 
     return (
         <div className="container mt-2">
-            <h2 className="text-center text-dark mb-4">Pending Publications</h2>
+            <h2 className="text-center text-dark mb-4">Institute-Wise Publications</h2>
             {publications.length > 0 ? (
                 <div className="row">
                     {publications.map(pub => (

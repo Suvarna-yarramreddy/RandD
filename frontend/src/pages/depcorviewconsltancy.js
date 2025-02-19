@@ -29,7 +29,7 @@ const ConsultancyProjectsPage = () => {
 
     return (
         <div className="container mt-2">
-            <h2 className="text-center text-dark mb-4">Department Consultancy Projects</h2>
+            <h2 className="text-center text-dark mb-4">Department-Wise Consultancy Projects</h2>
             {consultancyProjects.length > 0 ? (
                 <div className="row">
                     {consultancyProjects.map(project => (

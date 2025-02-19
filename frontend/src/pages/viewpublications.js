@@ -81,9 +81,7 @@ const PublicationsPage = () => {
                                                 {pub.citeAs}
                                             </a>
                                         </h5>
-                                        <button className="btn btn-danger mt-2" onClick={() => handleDelete(pub.publication_id)}>
-                                                Delete
-                                            </button>
+                                        
                                         {pub.status === 'Rejected by Department R&D Coordinator' && (
                                                 <button
                                                     className="btn btn-warning mt-2"
@@ -100,6 +98,9 @@ const PublicationsPage = () => {
                                                     Edit
                                                 </button>
                                             )}
+                                            <button className="btn btn-danger mt-2" onClick={() => handleDelete(pub.publication_id)}>
+                                                Delete
+                                            </button>
                                         </div>
                                         <div className="text-right">
                                             <strong>Status:</strong>

@@ -220,17 +220,19 @@ function ConsultancyForm() {
 
     // ✅ Make API request
     try {
-        const response = await axios.post("http://localhost:5000/addConsultancy", formDataToSend, {
-            headers: {
-                "Content-Type": "multipart/form-data",
-            },
-        });
-        alert("Form submitted successfully!");
-        navigate("/viewconsultants");
-    } catch (error) {
-        console.error("Error submitting form:", error.response?.data || error.message);
-        alert("Error submitting form. Please try again.");
-    }
+      await axios.post("http://localhost:5000/addConsultancy", formDataToSend, {
+          headers: {
+              "Content-Type": "multipart/form-data",
+          },
+      });
+  
+      alert("Form submitted successfully!");
+      navigate("/viewconsultants");
+  } catch (error) {
+      console.error("Error submitting form:", error.response?.data || error.message);
+      alert("Error submitting form. Please try again.");
+  }
+  
 };
 
   
@@ -238,7 +240,7 @@ function ConsultancyForm() {
 
   return (
     <div className="container mt-2">
-      <h2 className="text-center text-dark mb-4">Consultancy Application</h2>
+      <h2 className="text-center text-dark mb-4">Add Consultancy</h2>
       <form onSubmit={handleSubmit} encType="multipart/form-data">
         <div className="row">
           <div className="col-md-6 mb-3">

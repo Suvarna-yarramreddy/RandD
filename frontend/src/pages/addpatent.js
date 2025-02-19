@@ -293,7 +293,7 @@ const handleSubmit = async (e) => {
 
   return (
     <div className="container mt-2">
-      <h2 className="text-center text-dark mb-4">Patent Form</h2>
+      <h2 className="text-center text-dark mb-4">Add Patent</h2>
       <form onSubmit={handleSubmit}>
         {/* Category and IPR Type */}
         <div className="row">

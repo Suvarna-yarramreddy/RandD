@@ -354,7 +354,7 @@ app.get('/api/stats/:facultyId', async (req, res) => {
     });
 });
 
-  app.post("/addPublication", upload.single("proofOfPublication"), (req, res) => {
+ app.post("/addPublication", upload.single("proofOfPublication"), (req, res) => {
     const {
         faculty_id,
         natureOfPublication,
@@ -381,19 +381,38 @@ app.get('/api/stats/:facultyId', async (req, res) => {
         citeAs
     } = req.body;
 
-    // File uploaded will be saved as filename
+    // Validate required fields
+    if (!faculty_id || !natureOfPublication || !typeOfPublication) {
+        return res.status(400).send("Faculty ID, Nature of Publication, and Type of Publication are required.");
+    }
+
+    // If the type is Journal, validate quartile and impact factor
+    if (typeOfPublication === "Journal") {
+        if (!quartile || !impactFactor) {
+            return res.status(400).send("Quartile and Impact Factor are required for Journal publications.");
+        }
+    } else {
+        // If the type is not Journal, ensure quartile and impact factor can be null or undefined
+        if (quartile || impactFactor) {
+            return res.status(400).send("Quartile and Impact Factor should be empty for non-Journal publications.");
+        }
+    }
+
+    // File uploaded will be saved as filename (proofOfPublication will be the file path)
     const proofOfPublication = req.file ? req.file.path : null; // URL of the uploaded file
 
     // Include status with default value 'Applied'
     const status = "Applied";
 
+    // SQL query to insert the publication data
     const query = `
         INSERT INTO publications (
-        faculty_id, natureOfPublication, typeOfPublication, titleOfPaper, nameOfJournalConference, titleofChapter, nameofbook, 
-        nameOfPublisher, issnIsbn, authorStatus, firstAuthorName, firstAuthorAffiliation, coAuthors, indexed, quartile, impactFactor, 
-        doi, linkOfPaper, scopusLink, volume, pageNo, monthYear, citeAs, status, proofOfPublication
+            faculty_id, natureOfPublication, typeOfPublication, titleOfPaper, nameOfJournalConference, titleofChapter, nameofbook, 
+            nameOfPublisher, issnIsbn, authorStatus, firstAuthorName, firstAuthorAffiliation, coAuthors, indexed, quartile, impactFactor, 
+            doi, linkOfPaper, scopusLink, volume, pageNo, monthYear, citeAs, status, proofOfPublication
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
+    // Execute the query to insert the data
     db.query(query, [
         faculty_id, natureOfPublication, typeOfPublication, titleOfPaper, nameOfJournalConference, titleofChapter, nameofbook,
         nameOfPublisher, issnIsbn, authorStatus, firstAuthorName, firstAuthorAffiliation, coAuthors, indexed, quartile, impactFactor,

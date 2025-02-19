@@ -64,7 +64,7 @@ const SeedMoneyPage = () => {
 
     return (
         <div className="container mt-2">
-            <h2 className="text-center text-dark mb-4">Your Seed Money Applications</h2>
+            <h2 className="text-center text-dark mb-4">Your Seed Money</h2>
             {seedMoneyApplications.length > 0 ? (
                 <div className="row">
                     {seedMoneyApplications.map(app => (

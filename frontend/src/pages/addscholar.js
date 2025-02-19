@@ -210,7 +210,7 @@ const ResearchForm = () => {
 
 return (
     <div className="container mt-2">
-      <h2 className="text-center text-dark mb-4">Research Scholar Form</h2>
+      <h2 className="text-center text-dark mb-4">Add Research Scholar</h2>
       <form onSubmit={handleSubmit}>
         <div className="row">
           <div className="col-md-6 mb-3">
