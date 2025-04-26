@@ -326,7 +326,7 @@ app.get('/api/stats/:facultyId', async (req, res) => {
     const facultyId = req.params.facultyId;
     let updatedData = req.body;
 
-    delete updatedData.facultyId; // Remove facultyId from the update data
+    delete updatedData.facultyId; // Remove facultyId from update data
 
     // Convert empty strings and undefined values to NULL
     Object.keys(updatedData).forEach((key) => {
@@ -339,8 +339,16 @@ app.get('/api/stats/:facultyId', async (req, res) => {
 
     // Format 'date_of_joining_svecw' correctly
     if (updatedData.date_of_joining_svecw) {
-        const dateOfJoining = new Date(updatedData.date_of_joining_svecw);
-        updatedData.date_of_joining_svecw = dateOfJoining.toISOString().split('T')[0];
+        updatedData.date_of_joining_svecw = new Date(updatedData.date_of_joining_svecw)
+            .toISOString()
+            .split('T')[0]; // Extract YYYY-MM-DD
+    }
+
+    // ✅ Fix 'phd_registration_date' Formatting
+    if (updatedData.phd_registration_date) {
+        updatedData.phd_registration_date = new Date(updatedData.phd_registration_date)
+            .toISOString()
+            .split('T')[0]; // Extract YYYY-MM-DD
     }
 
     // Execute the SQL query
@@ -353,6 +361,7 @@ app.get('/api/stats/:facultyId', async (req, res) => {
         }
     });
 });
+
 
  app.post("/addPublication", upload.single("proofOfPublication"), (req, res) => {
     const {

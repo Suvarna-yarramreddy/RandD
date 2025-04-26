@@ -45,7 +45,7 @@ const Navbar = ({ setIsLoggedIn, setRole }) => {
 
         {/* Centered College Name */}
         <div className="mx-auto text-center d-none d-lg-block">
-          <h2 className="fw-bold mb-0 text-white">Shri Vishnu Engineering College for Women</h2>
+          <h2 className="fw-bold mb-0 text-white">Shri Vishnu Engineering College For Women</h2>
         </div>
 
         {/* Navbar Toggle */}

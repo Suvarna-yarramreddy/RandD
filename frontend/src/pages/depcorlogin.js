@@ -88,15 +88,14 @@ const LoginCorPage = () => {
             required
           >
             <option value="">Select Department</option>
-            <option value="cse">CSE</option>
-            <option value="aiml">AI & ML</option>
-            <option value="aids">AIDS</option>
-            <option value="cs">CS</option>
-            <option value="ece">ECE</option>
-            <option value="eee">EEE</option>
-            <option value="civil">Civil</option>
-            <option value="it">IT</option>
-            <option value="me">ME</option>
+            <option value="cse">COMPUTER SCIENCE AND ENGINEERING</option>
+            <option value="ai">ARTIFICIAL INTELLIGENCE</option>
+            <option value="cs">CYBER SECURITY</option>
+            <option value="ece">ELECTRICAL AND ELECTRONICS ENGINEERING</option>
+            <option value="eee">ELECTRONICS AND COMMUNICATION ENGINEERING</option>
+            <option value="civil">CIVIL ENGINEERING</option>
+            <option value="it">INFORMATION TECHNOLOGY</option>
+            <option value="me">MECHANICAL ENGINEERING</option>
           </select>
         </div>
         <button type="submit" className="btn btn-primary w-100">Login</button>
